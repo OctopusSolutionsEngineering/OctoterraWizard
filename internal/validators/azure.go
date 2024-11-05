@@ -2,11 +2,13 @@ package validators
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/service"
+	"io"
 )
 
 func AzureResourceGroupExists(tenantID, clientID, subscriptionId, clientSecret, resourceGroupName string) (bool, error) {
@@ -61,7 +63,16 @@ func AzureContainerExists(tenantID, clientID, clientSecret, accountName, contain
 		results, pagerErr := containers.NextPage(context.Background())
 
 		if pagerErr != nil {
-			return false, err
+			var authErr *azidentity.AuthenticationFailedError
+			if errors.As(pagerErr, &authErr) {
+				bytes, err := io.ReadAll(authErr.RawResponse.Body)
+				if err != nil {
+					return false, pagerErr
+				}
+
+				return false, fmt.Errorf("authentication failed: %s", string(bytes))
+			}
+			return false, fmt.Errorf("failed to get next page: %w", pagerErr)
 		}
 
 		for _, container := range results.ContainerItems {
