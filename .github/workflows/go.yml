@@ -50,7 +50,9 @@ jobs:
         shell: bash
 
       - name: Install Fyne Dependencies
-        run: sudo apt-get -y install golang gcc libgl1-mesa-dev xorg-dev
+        run: |
+          sudo apt-get update
+          sudo apt-get -y install golang gcc libgl1-mesa-dev xorg-dev
         shell: bash
 
       - name: Split integration tests
@@ -217,7 +219,9 @@ jobs:
         with:
           additionalArguments: /overrideconfig mode=Mainline
       - name: Install Fyne Dependencies
-        run: sudo apt-get -y install golang gcc libgl1-mesa-dev xorg-dev
+        run: |
+          sudo apt-get update
+          sudo apt-get -y install golang gcc libgl1-mesa-dev xorg-dev
         shell: bash
       - name: Install Dependencies
         run: go get ./...
