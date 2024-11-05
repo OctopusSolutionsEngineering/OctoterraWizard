@@ -24,9 +24,13 @@ func (s WelcomeStep) GetContainer(parent fyne.Window) *fyne.Container {
 		Welcome to the Octoterra Wizard.
 		This tool prepares your Octopus space to export it to another instance.
 	`))
+	label2 := widget.NewLabel(strutil.TrimMultilineWhitespace(`
+		Before you continue, you MUST backup your Octopus instance.
+		This tool modifies your Octopus instance and can cause data loss.
+	`))
 	linkUrl, _ := url.Parse("https://octopus.com/docs/administration/migrate-spaces-with-octoterra")
 	link := widget.NewHyperlink("Read the documentation.", linkUrl)
-	middle := container.New(layout.NewVBoxLayout(), heading, label1, link)
+	middle := container.New(layout.NewVBoxLayout(), heading, label1, label2, link)
 
 	bottom, previous, _ := s.BuildNavigation(func() {}, func() {
 		s.Wizard.ShowWizardStep(TestTerraformStep{Wizard: s.Wizard, BaseStep: BaseStep{State: s.State}})
