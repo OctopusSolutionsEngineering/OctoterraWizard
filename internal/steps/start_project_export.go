@@ -8,6 +8,7 @@ import (
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
+	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/deployments"
 	projects2 "github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/projects"
 	"github.com/mcasperson/OctoterraWizard/internal/data"
 	"github.com/mcasperson/OctoterraWizard/internal/infrastructure"
@@ -131,8 +132,40 @@ func (s StartProjectExportStep) Execute(statusCallback func(message string)) err
 		return project.Name != "Octoterra Space Management"
 	})
 
-	runAndTaskError := s.serializeProjects(filteredProjects, statusCallback)
-	runAndTaskError = errors.Join(runAndTaskError, s.deployProjects(filteredProjects, statusCallback))
+	// We start by exporting projects that do not have "Deploy a release" steps
+	var filterErrors error = nil
+	regularProjects := lo.Filter(filteredProjects, func(project *projects2.Project, index int) bool {
+		process, err := deployments.GetDeploymentProcessByID(myclient, myclient.GetSpaceID(), project.DeploymentProcessID)
+		filterErrors = errors.Join(filterErrors, err)
+
+		if err != nil {
+			return false
+		}
+
+		return !lo.ContainsBy(process.Steps, func(step *deployments.DeploymentStep) bool {
+			return lo.ContainsBy(step.Actions, func(action *deployments.DeploymentAction) bool {
+				return action.ActionType == "Octopus.DeployRelease"
+			})
+		})
+	})
+
+	if filterErrors != nil {
+		return filterErrors
+	}
+
+	runAndTaskError := s.serializeProjects(regularProjects, statusCallback)
+	runAndTaskError = errors.Join(runAndTaskError, s.deployProjects(regularProjects, statusCallback))
+
+	// Now we export projects that have "Deploy a release" steps. This ensures any child projects are available to
+	// be queried via a data source in the Terraform module.
+	deployReleaseProjects := lo.Filter(filteredProjects, func(project *projects2.Project, index int) bool {
+		return !lo.ContainsBy(regularProjects, func(regularProject *projects2.Project) bool {
+			return project.ID == regularProject.ID
+		})
+	})
+
+	runAndTaskError = s.serializeProjects(deployReleaseProjects, statusCallback)
+	runAndTaskError = errors.Join(runAndTaskError, s.deployProjects(deployReleaseProjects, statusCallback))
 
 	return runAndTaskError
 }
