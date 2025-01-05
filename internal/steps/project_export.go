@@ -319,19 +319,19 @@ func (s ProjectExportStep) Execute(prompt func(string, string, func(bool)), hand
 		}
 
 		// link the library variable set
-		project, err := myclient.Projects.GetByID(project.ID)
+		projectResource, err := myclient.Projects.GetByID(project.ID)
 
 		if err != nil {
-			handleError("🔴 Failed to get the project", err)
+			handleError("🔴 Failed to get the project", errors.New(err.Error()+" "+project.ID+" "+project.Name))
 			return
 		}
 
-		project.IncludedLibraryVariableSets = append(project.IncludedLibraryVariableSets, lvs.ID)
+		projectResource.IncludedLibraryVariableSets = append(projectResource.IncludedLibraryVariableSets, lvs.ID)
 
-		_, err = projects.Update(myclient, project)
+		_, err = projects.Update(myclient, projectResource)
 
 		if err != nil {
-			handleError("🔴 Failed to update the project", err)
+			handleError("🔴 Failed to update the project", errors.New(err.Error()+" "+projectResource.ID+" "+projectResource.Name))
 			return
 		}
 
