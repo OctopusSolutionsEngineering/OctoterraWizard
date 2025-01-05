@@ -3,7 +3,7 @@ module github.com/mcasperson/OctoterraWizard
 go 1.22.5
 
 require (
-	fyne.io/fyne/v2 v2.5.2
+	fyne.io/fyne/v2 v2.5.3
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.8.0
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources v1.2.0
 	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.4.0
@@ -57,7 +57,7 @@ require (
 	github.com/fredbi/uri v1.1.0 // indirect
 	github.com/fsnotify/fsnotify v1.8.0 // indirect
 	github.com/fyne-io/gl-js v0.0.0-20230506162202-1fdaa286a934 // indirect
-	github.com/fyne-io/glfw-js v0.0.0-20240101223322-6e1efdc71b7a // indirect
+	github.com/fyne-io/glfw-js v0.0.0-20241126112943-313d8a0fe1d0 // indirect
 	github.com/fyne-io/image v0.0.0-20240417123036-dc0ee9e7c964 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.6 // indirect
 	github.com/go-gl/gl v0.0.0-20231021071112-07e5d0ea2e71 // indirect
@@ -99,7 +99,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/power-devops/perfstat v0.0.0-20240221224432-82ca36839d55 // indirect
-	github.com/rymdport/portal v0.2.6 // indirect
+	github.com/rymdport/portal v0.3.0 // indirect
 	github.com/shirou/gopsutil/v3 v3.24.5 // indirect
 	github.com/shoenig/go-m1cpu v0.1.6 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
