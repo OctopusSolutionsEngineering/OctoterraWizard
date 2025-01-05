@@ -77,7 +77,7 @@ func (s OctopusDestinationDetails) GetContainer(parent fyne.Window) *fyne.Contai
 	validation := func(input string) {
 		next.Disable()
 
-		if s.server != nil && s.server.Text != "" && s.apiKey != nil && s.apiKey.Text != "" && s.spaceId != nil && s.spaceId.Text != "" {
+		if s.server == nil || s.server.Text == "" || s.apiKey == nil || s.apiKey.Text == "" || s.spaceId == nil || s.spaceId.Text == "" {
 			return
 		}
 
