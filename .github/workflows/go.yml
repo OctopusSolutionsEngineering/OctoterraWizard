@@ -94,8 +94,6 @@ jobs:
 
       - name: Go test
         shell: bash
-        # Disabled for now as some of the Azure storage resources are not configured properly
-        if: false
         env:
           LICENSE: ${{ secrets.LICENSE }}
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
