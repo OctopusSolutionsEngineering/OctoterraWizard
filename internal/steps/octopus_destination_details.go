@@ -84,8 +84,6 @@ func (s OctopusDestinationDetails) GetContainer(parent fyne.Window) *fyne.Contai
 		next.Enable()
 	}
 
-	validation("")
-
 	heading := widget.NewLabel("Octopus Destination Server")
 	heading.TextStyle = fyne.TextStyle{Bold: true}
 
@@ -111,6 +109,8 @@ func (s OctopusDestinationDetails) GetContainer(parent fyne.Window) *fyne.Contai
 	s.spaceId = widget.NewEntry()
 	s.spaceId.SetPlaceHolder("Spaces-#")
 	s.spaceId.SetText(s.State.DestinationSpace)
+
+	validation("")
 
 	s.server.OnChanged = validation
 	s.apiKey.OnChanged = validation
