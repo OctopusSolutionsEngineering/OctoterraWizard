@@ -292,13 +292,18 @@ jobs:
           GOOS: windows
           GOARCH: amd64
           CGO_ENABLED: 1
+      # Bundle mesa with the windows build
+      # https://github.com/fyne-io/fyne/issues/4033
+      - name: Create ZIP
+        run: Compress-Archive -Path octoterrawiz_windows_amd64.exe, supportfiles/opengl32.dll -DestinationPath octoterrawiz_windows_amd64.zip
+        shell: pwsh
       - name: Upload Release Assets
         uses: softprops/action-gh-release@v2
         continue-on-error: true
         with:
           tag_name: ${{ steps.determine_version.outputs.semVer }}+run${{ github.run_number }}-attempt${{ github.run_attempt }}
           files: |
-            octoterrawiz_windows_amd64.exe
+            octoterrawiz_windows_amd64.zip
 
   build-mac:
     runs-on: macos-14
