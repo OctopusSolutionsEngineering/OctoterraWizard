@@ -528,8 +528,7 @@ resource "octopusdeploy_runbook_process" "deploy_space_aws" {
       }
 
       container {
-        feed_id = lower(var.use_container_images) == "true" ? octopusdeploy_docker_container_registry.feed_docker.id :
-          ""
+        feed_id = lower(var.use_container_images) == "true" ? octopusdeploy_docker_container_registry.feed_docker.id : ""
         image   = lower(var.use_container_images) == "true" ? "ghcr.io/octopusdeploylabs/terraform-workertools" : ""
       }
 
@@ -614,8 +613,7 @@ resource "octopusdeploy_runbook_process" "deploy_space_azure" {
       }
 
       container {
-        feed_id = lower(var.use_container_images) == "true" ? octopusdeploy_docker_container_registry.feed_docker.id :
-          ""
+        feed_id = lower(var.use_container_images) == "true" ? octopusdeploy_docker_container_registry.feed_docker.id : ""
         image   = lower(var.use_container_images) == "true" ? "ghcr.io/octopusdeploylabs/terraform-workertools" : ""
       }
 
