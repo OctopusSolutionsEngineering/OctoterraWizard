@@ -57,7 +57,7 @@ resource "octopusdeploy_variable" "sensitive_var_4" {
   owner_id  = octopusdeploy_project.deploy_frontend_project.id
   type      = "String"
   name      = "SensitiveVariable"
-  sensitive_value     = "RegularVariable"
+  value     = "RegularVariable"
   is_sensitive = false
 }
 
