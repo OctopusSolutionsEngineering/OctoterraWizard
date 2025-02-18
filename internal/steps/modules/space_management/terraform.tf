@@ -162,6 +162,14 @@ variable "terraform_backend" {
   default     = "AWS S3"
 }
 
+variable "ignore_all_library_variable_sets" {
+  type        = string
+  nullable    = false
+  sensitive   = false
+  description = "Whether to ignore all the library variable sets or not"
+  default     = "False"
+}
+
 variable "use_container_images" {
   type        = string
   nullable    = false
@@ -423,7 +431,7 @@ resource "octopusdeploy_runbook_process" "runbook" {
         "SerializeSpace.Exported.Space.DummySecrets"                 = "True"
         "SerializeSpace.Exported.Space.DefaultSecrets"               = "True"
         "SerializeSpace.Exported.Space.IgnoredLibraryVariableSet"    = "Octoterra.*"
-        "SerializeSpace.Exported.Space.IgnoredAllLibraryVariableSet" = "False"
+        "SerializeSpace.Exported.Space.IgnoredAllLibraryVariableSet" = var.ignore_all_library_variable_sets
         "SerializeSpace.ThisInstance.Server.Url"                     = "#{Octopus.Source.Server}"
         "Octopus.Action.Template.Id"                                 = var.octopus_serialize_actiontemplateid
         "SerializeSpace.Exported.Space.IncludeStepTemplates"         = "True"
