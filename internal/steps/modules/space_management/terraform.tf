@@ -416,8 +416,7 @@ resource "octopusdeploy_runbook_process" "runbook" {
       can_be_used_for_project_versioning = false
       is_required = false
       # Use the ubuntu worker pool if it is present, or use the default otherwise
-      worker_pool_id                     = length(data.octopusdeploy_worker_pools.ubuntu_worker_pool.worker_pools) == 0
-        ? "" : data.octopusdeploy_worker_pools.ubuntu_worker_pool.worker_pools[0].id
+      worker_pool_id                     = length(data.octopusdeploy_worker_pools.ubuntu_worker_pool.worker_pools) == 0 ? "" : data.octopusdeploy_worker_pools.ubuntu_worker_pool.worker_pools[0].id
       properties = {
         "Octopus.Action.RunOnServer"                                 = "true"
         "Octopus.Action.Script.ScriptSource"                         = "Inline"
@@ -488,8 +487,7 @@ resource "octopusdeploy_runbook_process" "deploy_space_aws" {
       can_be_used_for_project_versioning = true
       is_required = false
       # Use the ubuntu worker pool if it is present, or use the default otherwise
-      worker_pool_id                     = length(data.octopusdeploy_worker_pools.ubuntu_worker_pool.worker_pools) == 0
-        ? "" : data.octopusdeploy_worker_pools.ubuntu_worker_pool.worker_pools[0].id
+      worker_pool_id                     = length(data.octopusdeploy_worker_pools.ubuntu_worker_pool.worker_pools) == 0 ? "" : data.octopusdeploy_worker_pools.ubuntu_worker_pool.worker_pools[0].id
       properties = {
         "OctoterraApply.AWS.S3.BucketName"                      = var.terraform_state_bucket
         "OctoterraApply.AWS.S3.BucketRegion"                    = var.terraform_state_bucket_region
@@ -576,8 +574,7 @@ resource "octopusdeploy_runbook_process" "deploy_space_azure" {
       is_required                        = false
       worker_pool_variable = ""
       # Use the ubuntu worker pool if it is present, or use the default otherwise
-      worker_pool_id                     = length(data.octopusdeploy_worker_pools.ubuntu_worker_pool.worker_pools) == 0
-        ? "" : data.octopusdeploy_worker_pools.ubuntu_worker_pool.worker_pools[0].id
+      worker_pool_id                     = length(data.octopusdeploy_worker_pools.ubuntu_worker_pool.worker_pools) == 0 ? "" : data.octopusdeploy_worker_pools.ubuntu_worker_pool.worker_pools[0].id
       properties = {
         "Octopus.Action.Template.Id"                    = var.octopus_deployazure_actiontemplateid
         "Octopus.Action.Template.Version"               = "1"
