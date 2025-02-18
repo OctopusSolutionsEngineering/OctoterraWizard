@@ -197,7 +197,7 @@ resource "octopusdeploy_runbook_process" "runbook" {
         "SerializeProject.ThisInstance.Server.Url" = "#{Octopus.Source.Server}"
         "Octopus.Action.Template.Id" = var.octopus_serialize_actiontemplateid
         "SerializeProject.ThisInstance.Terraform.Backend" = var.terraform_backend == "AWS S3" ? "s3" : "azurerm"
-        "Octopus.Action.Template.Version" = "15"
+        "Octopus.Action.Template.Version" = "1"
         "SerializeProject.Exported.Project.Name" = "#{Octopus.Project.Name}"
         "Octopus.Action.Script.Syntax" = "Python"
         "Octopus.Action.RunOnServer" = "true"
@@ -292,7 +292,7 @@ resource "octopusdeploy_runbook_process" "deploy_project_aws" {
         "Octopus.Action.Terraform.AdditionalActionParams" = "-var=octopus_server=#{OctoterraApply.Octopus.ServerUrl} -var=octopus_apikey=#{OctoterraApply.Octopus.ApiKey} -var=octopus_space_id=#{OctoterraApply.Octopus.SpaceID} #{if OctoterraApply.Terraform.AdditionalApplyParams}#{OctoterraApply.Terraform.AdditionalApplyParams}#{/if}"
         "Octopus.Action.Terraform.FileSubstitution" = "**/project_variable_sensitive*.tf"
         "Octopus.Action.Script.ScriptSource" = "Package"
-        "Octopus.Action.Template.Version" = "4"
+        "Octopus.Action.Template.Version" = "1"
         "Octopus.Action.GoogleCloud.UseVMServiceAccount" = "True"
         "Octopus.Action.Terraform.ManagedAccount" = "AWS"
         "Octopus.Action.Aws.AssumeRole" = "False"
@@ -355,7 +355,7 @@ resource "octopusdeploy_runbook_process" "deploy_project_azure" {
       worker_pool_id                     = length(data.octopusdeploy_worker_pools.ubuntu_worker_pool.worker_pools) == 0 ? "" : data.octopusdeploy_worker_pools.ubuntu_worker_pool.worker_pools[0].id
       properties = {
         "Octopus.Action.Template.Id"                    = var.octopus_deployazure_actiontemplateid
-        "Octopus.Action.Template.Version"               = "2"
+        "Octopus.Action.Template.Version"               = "1"
         "Octopus.Action.RunOnServer"                    = "true"
         "Octopus.Action.Terraform.AllowPluginDownloads" = "True"
         "Octopus.Action.Package.DownloadOnTentacle"     = "False"
