@@ -2,19 +2,19 @@
 # Manual edits may be lost in future updates.
 
 provider "registry.terraform.io/octopusdeploylabs/octopusdeploy" {
-  version     = "0.21.4"
-  constraints = "0.21.4"
+  version     = "0.40.4"
+  constraints = "0.40.4"
   hashes = [
-    "h1:t9kQfm+sq7CT7j6CfMWvlsClT+GExLwNcud0MY/mssc=",
-    "zh:0a21be49d86c6ec6ab64335304135b0ec0c7851547c1b632c86e09eb7818039f",
-    "zh:23ea21ace2fc7b9bab4ea22de209d110a8e0cbbdfe11839ebafe805c26149493",
-    "zh:3e055c9cc9a8b0e39ad6f5220aa75eb4a687b8dee8baab831b7a35dbdd36dd89",
-    "zh:52d6fb3d263a58b25e706110f4fe4f5ffc6223e1eb588b989906307c95027a3a",
-    "zh:56bf8a8745327e1739d63c40906d853e527e5843a7f1c8dac29929073a7c788b",
-    "zh:608b91ecb1ae5422b102f60a2cd4c751aa25072fd8574475617a90295c8994c1",
-    "zh:9be36535e7eceb8c05dfb3e9c0bb8d0195c368b539a6ea131a6565614efd7319",
-    "zh:ba149ba2f0dc4a1592a2a1a79220d3ef817a84ecbe35dd32307aaf71ce246376",
-    "zh:c8dbc95470da26fbea9bcf4e83344c56bd0bd53a64512f3ffb520984ec10c943",
-    "zh:d911e685fe117b77e45d7181f9c175081ed9a86687cd0c293af8362517024596",
+    "h1:OLgH2MaqzzHR+s8Dd7ysM/Vfw2EAonEtGCdxIlkgzFM=",
+    "zh:0d4ed01ed592b342d298e211b40e2974ebc4dd95ca92469ba78fe5e931a8cc72",
+    "zh:10c12744265cc9cdcb9bd52a67eafb449a296044ca382aaa57b6886373d5683f",
+    "zh:2ad06d10cf22675cb1b3f92e834f1bf870c3c4e6a049d958516c7f42e40ec24d",
+    "zh:459be26face582610c8a74b3626224d96cb147aaa0f0e3022ae84a24a5d20443",
+    "zh:5a0624756a50e6d920e62837adefc5486bfb3b7afbf52c33a97f319286d819ac",
+    "zh:720ab27dcd82d8974fc99582c6af327d13f4686b9170da0b8b3b7f1f4cd1f58b",
+    "zh:86845052322a09f536eb895e3ee62af20a23ad418728667e6a67d8da4eb86b90",
+    "zh:b09e815f1378c086b2a2f5c31615dfa91e080ade092a0ab28f0a68b553bbf97d",
+    "zh:ce2562d106c605c56aed4a657c4804f8e99801c4bc4580fe6e50adf59ff40318",
+    "zh:d8c7a044c109277c3d8d23a6be6dce80c8d7bf773a06fa660194adc041032e9a",
   ]
 }

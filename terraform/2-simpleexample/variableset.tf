@@ -24,7 +24,7 @@ resource "octopusdeploy_variable" "unscoped_secret" {
   is_sensitive = true
   is_editable = true
   owner_id = octopusdeploy_library_variable_set.octopus_library_variable_set.id
-  value = "Default"
+  sensitive_value = "Default"
 }
 
 resource "octopusdeploy_variable" "secret" {
@@ -34,7 +34,7 @@ resource "octopusdeploy_variable" "secret" {
   is_sensitive = true
   is_editable = true
   owner_id = octopusdeploy_library_variable_set.octopus_library_variable_set.id
-  value = "Development"
+  sensitive_value = "Development"
   scope {
     environments = [octopusdeploy_environment.development_environment.id]
   }
@@ -47,7 +47,7 @@ resource "octopusdeploy_variable" "secret2" {
   is_sensitive = true
   is_editable = true
   owner_id = octopusdeploy_library_variable_set.octopus_library_variable_set.id
-  value = "Test"
+  sensitive_value = "Test"
   scope {
     environments = [octopusdeploy_environment.test_environment.id]
   }
@@ -60,7 +60,7 @@ resource "octopusdeploy_variable" "secret3" {
   is_sensitive = true
   is_editable = true
   owner_id = octopusdeploy_library_variable_set.octopus_library_variable_set.id
-  value = "Test"
+  sensitive_value = "Test"
   scope {
     environments = [octopusdeploy_environment.production_environment.id]
   }
@@ -73,5 +73,5 @@ resource "octopusdeploy_variable" "unscoped" {
   is_sensitive = true
   is_editable = true
   owner_id = octopusdeploy_library_variable_set.octopus_library_variable_set.id
-  value = "Unscoped"
+  sensitive_value = "Unscoped"
 }
