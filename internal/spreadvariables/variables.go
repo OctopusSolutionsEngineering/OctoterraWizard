@@ -370,17 +370,20 @@ func (c *VariableSpreader) SpreadAllVariables() error {
 
 	variableSets := []OwnerVariablePair{}
 
-	for _, libraryVariableSet := range libraryVariableSets {
-		variableSet, err := variables.GetVariableSet(c.client, c.client.GetSpaceID(), libraryVariableSet.VariableSetID)
+	// If we are not exporting library variable sets, we don't need to process them
+	if !c.State.ExcludeAllLibraryVariableSets {
+		for _, libraryVariableSet := range libraryVariableSets {
+			variableSet, err := variables.GetVariableSet(c.client, c.client.GetSpaceID(), libraryVariableSet.VariableSetID)
 
-		if err != nil {
-			return errors.New("Failed to get variable set for library variable set " + libraryVariableSet.Name + ". Error was \"" + err.Error() + "\"")
+			if err != nil {
+				return errors.New("Failed to get variable set for library variable set " + libraryVariableSet.Name + ". Error was \"" + err.Error() + "\"")
+			}
+
+			variableSets = append(variableSets, OwnerVariablePair{
+				OwnerID:     libraryVariableSet.ID,
+				VariableSet: variableSet,
+			})
 		}
-
-		variableSets = append(variableSets, OwnerVariablePair{
-			OwnerID:     libraryVariableSet.ID,
-			VariableSet: variableSet,
-		})
 	}
 
 	for _, project := range projects {

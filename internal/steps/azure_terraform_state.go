@@ -97,7 +97,7 @@ func (s AzureTerraformStateStep) GetContainer(parent fyne.Window) *fyne.Containe
 
 		nextCallback := func(result bool) {
 			if result {
-				s.Wizard.ShowWizardStep(SpreadVariablesStep{
+				s.Wizard.ShowWizardStep(AdvancedOptionsStep{
 					Wizard:   s.Wizard,
 					BaseStep: BaseStep{State: s.getState()}})
 			}

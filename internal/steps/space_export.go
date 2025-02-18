@@ -449,6 +449,7 @@ func (s SpaceExportStep) Execute(prompt func(string, string, func(bool)), handle
 		"-var=terraform_state_azure_password="+s.State.AzurePassword,
 		"-var=octopus_destination_server="+s.State.DestinationServer,
 		"-var=octopus_destination_apikey="+s.State.DestinationApiKey,
+		"-var=ignore_all_library_variable_sets="+fmt.Sprint(s.State.ExcludeAllLibraryVariableSets),
 		"-var=octopus_destination_space_id="+s.State.DestinationSpace)
 	applyCmd.Dir = dir
 

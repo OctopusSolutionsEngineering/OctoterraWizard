@@ -81,7 +81,7 @@ func (s AwsTerraformStateStep) GetContainer(parent fyne.Window) *fyne.Container 
 
 		nexCallback := func(proceed bool) {
 			if proceed {
-				s.Wizard.ShowWizardStep(SpreadVariablesStep{
+				s.Wizard.ShowWizardStep(AdvancedOptionsStep{
 					Wizard:   s.Wizard,
 					BaseStep: BaseStep{State: s.getState()}})
 			}
