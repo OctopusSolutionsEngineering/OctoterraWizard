@@ -39,3 +39,16 @@ The default values used by the wizard are defined in environment variables:
 ## Screenshot
 
 ![](screenshot.png)
+
+## Azure Storage Accounts with Terraform
+
+These permissions allow you to use the Azure Storage Account as a Terraform backend. They may not be the most restrictive
+permissions, but they have been tested.
+
+Give you app:
+
+* Reader access to the resource group
+* Reader and Data Access to the storage account
+* Storage Blob Data Contributor to the container
+
+![](azure.png)
