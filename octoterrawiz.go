@@ -8,6 +8,7 @@ import (
 	"github.com/mcasperson/OctoterraWizard/internal/wizard"
 	"image/color"
 	"os"
+	"strings"
 )
 
 var Version = "development"
@@ -68,28 +69,29 @@ func main() {
 	wiz.ShowWizardStep(steps.WelcomeStep{
 		Wizard: *wiz,
 		BaseStep: steps.BaseStep{State: state.State{
-			BackendType:               os.Getenv("OCTOTERRAWIZ_BACKEND_TYPE"),
-			Server:                    defaultSourceServer,
-			ServerExternal:            "",
-			ApiKey:                    defaultSourceServerApi,
-			Space:                     defaultSourceServerSpace,
-			DestinationServer:         defaultDestinationServer,
-			DestinationServerExternal: "",
-			DestinationApiKey:         defaultDestinationServerApi,
-			DestinationSpace:          defaultDestinationServerSpace,
-			AwsAccessKey:              os.Getenv("AWS_ACCESS_KEY_ID"),
-			AwsSecretKey:              os.Getenv("AWS_SECRET_ACCESS_KEY"),
-			AwsS3Bucket:               os.Getenv("AWS_DEFAULT_BUCKET"),
-			AwsS3BucketRegion:         os.Getenv("AWS_DEFAULT_REGION"),
-			PromptForDelete:           os.Getenv("OCTOTERRAWIZ_PROMPT_FOR_DELETE") == "true",
-			UseContainerImages:        os.Getenv("OCTOTERRAWIZ_USE_CONTAINER_IMAGES") == "true",
-			AzureResourceGroupName:    os.Getenv("OCTOTERRAWIZ_AZURE_RESOURCE_GROUP"),
-			AzureStorageAccountName:   os.Getenv("OCTOTERRAWIZ_AZURE_STORAGE_ACCOUNT"),
-			AzureContainerName:        os.Getenv("OCTOTERRAWIZ_AZURE_CONTAINER"),
-			AzureSubscriptionId:       os.Getenv("AZURE_SUBSCRIPTION_ID"),
-			AzureTenantId:             os.Getenv("AZURE_TENANT_ID"),
-			AzureApplicationId:        os.Getenv("AZURE_CLIENT_ID"),
-			AzurePassword:             os.Getenv("AZURE_CLIENT_SECRET"),
+			BackendType:                   os.Getenv("OCTOTERRAWIZ_BACKEND_TYPE"),
+			Server:                        defaultSourceServer,
+			ServerExternal:                "",
+			ApiKey:                        defaultSourceServerApi,
+			Space:                         defaultSourceServerSpace,
+			DestinationServer:             defaultDestinationServer,
+			DestinationServerExternal:     "",
+			DestinationApiKey:             defaultDestinationServerApi,
+			DestinationSpace:              defaultDestinationServerSpace,
+			AwsAccessKey:                  os.Getenv("AWS_ACCESS_KEY_ID"),
+			AwsSecretKey:                  os.Getenv("AWS_SECRET_ACCESS_KEY"),
+			AwsS3Bucket:                   os.Getenv("AWS_DEFAULT_BUCKET"),
+			AwsS3BucketRegion:             os.Getenv("AWS_DEFAULT_REGION"),
+			PromptForDelete:               strings.ToLower(os.Getenv("OCTOTERRAWIZ_PROMPT_FOR_DELETE")) == "true",
+			UseContainerImages:            strings.ToLower(os.Getenv("OCTOTERRAWIZ_USE_CONTAINER_IMAGES")) == "true",
+			AzureResourceGroupName:        os.Getenv("OCTOTERRAWIZ_AZURE_RESOURCE_GROUP"),
+			AzureStorageAccountName:       os.Getenv("OCTOTERRAWIZ_AZURE_STORAGE_ACCOUNT"),
+			AzureContainerName:            os.Getenv("OCTOTERRAWIZ_AZURE_CONTAINER"),
+			AzureSubscriptionId:           os.Getenv("AZURE_SUBSCRIPTION_ID"),
+			AzureTenantId:                 os.Getenv("AZURE_TENANT_ID"),
+			AzureApplicationId:            os.Getenv("AZURE_CLIENT_ID"),
+			AzurePassword:                 os.Getenv("AZURE_CLIENT_SECRET"),
+			ExcludeAllLibraryVariableSets: strings.ToLower(os.Getenv("OCTOTERRAWIZ_EXCLUDE_ALL_LIBRARY_VARIABLE_SETS")) == "true",
 		}},
 	})
 	wiz.Window.ShowAndRun()
