@@ -236,7 +236,7 @@ func PublishRunbook(state state.State, runbookName string, projectName string) e
 
 func PublishRunbookRetry(state state.State, runbookName string, projectName string, retryCount int, lastError error) error {
 	if retryCount > RetryCount {
-		return "", errors.Join(errors.New("Failed to publish runbook after "+fmt.Sprint(RetryCount)+" retries"), lastError)
+		return errors.Join(errors.New("Failed to publish runbook after "+fmt.Sprint(RetryCount)+" retries"), lastError)
 	}
 
 	if retryCount > 1 {
