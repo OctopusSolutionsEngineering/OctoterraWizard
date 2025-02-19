@@ -390,7 +390,7 @@ resource "octopusdeploy_runbook" "serialize_space" {
   environment_scope           = "All"
   environments = []
   default_guided_failure_mode = "EnvironmentDefault"
-  force_package_download      = true
+  force_package_download      = false
 }
 
 resource "octopusdeploy_runbook_process" "runbook" {
@@ -460,7 +460,7 @@ resource "octopusdeploy_runbook" "deploy_space" {
   environment_scope           = "All"
   environments = []
   default_guided_failure_mode = "EnvironmentDefault"
-  force_package_download      = true
+  force_package_download      = false
 }
 
 resource "octopusdeploy_runbook_process" "deploy_space_aws" {
