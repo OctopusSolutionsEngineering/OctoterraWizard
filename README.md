@@ -14,6 +14,12 @@ View the docs [here](https://octopus.com/docs/administration/migrate-spaces-with
 
 The default values used by the wizard are defined in environment variables:
 
+* `OCTOTERRAWIZ_SOURCE_SERVER`: The URL of the Octopus server to export from
+* `OCTOTERRAWIZ_SOURCE_API_KEY`: The API key to use to connect to the source server
+* `OCTOTERRAWIZ_SOURCE_SPACE_ID`: The ID of the space to export
+* `OCTOTERRAWIZ_DESTINATION_SERVER`: The URL of the Octopus server to import to
+* `OCTOTERRAWIZ_DESTINATION_API_KEY`: The API key to use to connect to the destination server
+* `OCTOTERRAWIZ_DESTINATION_SPACE_ID`: The ID of the space to import to
 * `OCTOTERRAWIZ_BACKEND_TYPE`: Either `AWS S3` or `Azure Storage`
 * `AWS_ACCESS_KEY_ID`: [AWS environment variable](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-envvars.html)
 * `AWS_SECRET_ACCESS_KEY`: [AWS environment variable](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-envvars.html)
@@ -28,6 +34,7 @@ The default values used by the wizard are defined in environment variables:
 * `AZURE_TENANT_ID`: [Azure environment variable](https://azure.github.io/static-web-apps-cli/docs/cli/env-vars/)
 * `AZURE_CLIENT_ID`: [Azure environment variable](https://azure.github.io/static-web-apps-cli/docs/cli/env-vars/)
 * `AZURE_CLIENT_SECRET`: [Azure environment variable](https://azure.github.io/static-web-apps-cli/docs/cli/env-vars/)
+* `OCTOTERRAWIZ_EXCLUDE_ALL_LIBRARY_VARIABLE_SETS`: If set to `true`, the tool will exclude all library variable sets from the export
 
 ## Screenshot
 
