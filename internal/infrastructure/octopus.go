@@ -20,6 +20,8 @@ import (
 	"time"
 )
 
+const RetryCount = 5
+
 func WaitForTask(state state.State, taskId string, statusCallback func(message string)) error {
 	myclient, err := octoclient.CreateClient(state)
 
@@ -73,28 +75,40 @@ func WaitForTask(state state.State, taskId string, statusCallback func(message s
 }
 
 func RunRunbook(state state.State, runbookName string, projectName string) (string, error) {
+	return RunRunbookRetry(state, runbookName, projectName, 0, nil)
+}
+
+func RunRunbookRetry(state state.State, runbookName string, projectName string, retryCount int, lastError error) (string, error) {
+	if retryCount > RetryCount {
+		return "", errors.Join(errors.New("Failed to run runbook after "+fmt.Sprint(RetryCount)+" retries"), lastError)
+	}
+
+	if retryCount > 1 {
+		time.Sleep(10 * time.Second)
+	}
+
 	myclient, err := octoclient.CreateClient(state)
 
 	if err != nil {
-		return "", err
+		return RunRunbookRetry(state, runbookName, projectName, retryCount+1, err)
 	}
 
 	environment, err := environments.GetAll(myclient, myclient.GetSpaceID())
 
 	if err != nil {
-		return "", err
+		return RunRunbookRetry(state, runbookName, projectName, retryCount+1, err)
 	}
 
 	project, err := projects.GetByName(myclient, myclient.GetSpaceID(), projectName)
 
 	if err != nil {
-		return "", err
+		return RunRunbookRetry(state, runbookName, projectName, retryCount+1, err)
 	}
 
 	runbook, err := runbooks.GetByName(myclient, myclient.GetSpaceID(), project.GetID(), runbookName)
 
 	if err != nil {
-		return "", err
+		return RunRunbookRetry(state, runbookName, projectName, retryCount+1, err)
 	}
 
 	if runbook.PublishedRunbookSnapshotID == "" {
@@ -111,19 +125,19 @@ func RunRunbook(state state.State, runbookName string, projectName string) (stri
 	runbookRunPreviewRequest, err := http.NewRequest("GET", url, nil)
 
 	if err != nil {
-		return "", err
+		return RunRunbookRetry(state, runbookName, projectName, retryCount+1, err)
 	}
 
 	runbookRunPreviewResponse, err := myclient.HttpSession().DoRawRequest(runbookRunPreviewRequest)
 
 	if err != nil {
-		return "", err
+		return RunRunbookRetry(state, runbookName, projectName, retryCount+1, err)
 	}
 
 	runbookRunPreviewRaw, err := io.ReadAll(runbookRunPreviewResponse.Body)
 
 	if err != nil {
-		return "", err
+		return RunRunbookRetry(state, runbookName, projectName, retryCount+1, err)
 	}
 
 	if runbookRunPreviewResponse.StatusCode < 200 || runbookRunPreviewResponse.StatusCode > 299 {
@@ -138,7 +152,7 @@ func RunRunbook(state state.State, runbookName string, projectName string) (stri
 	err = json.Unmarshal(runbookRunPreviewRaw, &runbookRunPreview)
 
 	if err != nil {
-		return "", err
+		return RunRunbookRetry(state, runbookName, projectName, retryCount+1, err)
 	}
 
 	runbookFormNames := lo.Map(runbookRunPreview["Form"].(map[string]any)["Elements"].([]any), func(value any, index int) any {
@@ -171,26 +185,26 @@ func RunRunbook(state state.State, runbookName string, projectName string) (stri
 	runbookBodyJson, err := json.Marshal(runbookBody)
 
 	if err != nil {
-		return "", err
+		return RunRunbookRetry(state, runbookName, projectName, retryCount+1, err)
 	}
 
 	url = state.GetExternalServer() + "/api/" + state.Space + "/runbookRuns"
 	runbookRunRequest, err := http.NewRequest("POST", url, bytes.NewReader(runbookBodyJson))
 
 	if err != nil {
-		return "", err
+		return RunRunbookRetry(state, runbookName, projectName, retryCount+1, err)
 	}
 
 	runbookRunResponse, err := myclient.HttpSession().DoRawRequest(runbookRunRequest)
 
 	if err != nil {
-		return "", err
+		return RunRunbookRetry(state, runbookName, projectName, retryCount+1, err)
 	}
 
 	runbookRunRaw, err := io.ReadAll(runbookRunResponse.Body)
 
 	if err != nil {
-		return "", err
+		return RunRunbookRetry(state, runbookName, projectName, retryCount+1, err)
 	}
 
 	if runbookRunResponse.StatusCode < 200 || runbookRunResponse.StatusCode > 299 {
@@ -205,7 +219,7 @@ func RunRunbook(state state.State, runbookName string, projectName string) (stri
 	err = json.Unmarshal(runbookRunRaw, &runbookRun)
 
 	if err != nil {
-		return "", err
+		return RunRunbookRetry(state, runbookName, projectName, retryCount+1, err)
 	}
 
 	if _, ok := runbookRun["TaskId"]; !ok {
@@ -217,41 +231,53 @@ func RunRunbook(state state.State, runbookName string, projectName string) (stri
 }
 
 func PublishRunbook(state state.State, runbookName string, projectName string) error {
+	return PublishRunbookRetry(state, runbookName, projectName, 0, nil)
+}
+
+func PublishRunbookRetry(state state.State, runbookName string, projectName string, retryCount int, lastError error) error {
+	if retryCount > RetryCount {
+		return "", errors.Join(errors.New("Failed to publish runbook after "+fmt.Sprint(RetryCount)+" retries"), lastError)
+	}
+
+	if retryCount > 1 {
+		time.Sleep(10 * time.Second)
+	}
+
 	myclient, err := octoclient.CreateClient(state)
 
 	if err != nil {
-		return err
+		return PublishRunbookRetry(state, runbookName, projectName, retryCount+1, err)
 	}
 
 	project, err := projects.GetByName(myclient, myclient.GetSpaceID(), projectName)
 
 	if err != nil {
-		return err
+		return PublishRunbookRetry(state, runbookName, projectName, retryCount+1, err)
 	}
 
 	runbook, err := runbooks.GetByName(myclient, myclient.GetSpaceID(), project.GetID(), runbookName)
 
 	if err != nil {
-		return err
+		return PublishRunbookRetry(state, runbookName, projectName, retryCount+1, err)
 	}
 
 	url := state.GetExternalServer() + runbook.GetLinks()["RunbookSnapshotTemplate"]
 	runbookSnapshotTemplateRequest, err := http.NewRequest("GET", url, nil)
 
 	if err != nil {
-		return err
+		return PublishRunbookRetry(state, runbookName, projectName, retryCount+1, err)
 	}
 
 	runbookSnapshotTemplateResponse, err := myclient.HttpSession().DoRawRequest(runbookSnapshotTemplateRequest)
 
 	if err != nil {
-		return err
+		return PublishRunbookRetry(state, runbookName, projectName, retryCount+1, err)
 	}
 
 	runbookSnapshotTemplateRaw, err := io.ReadAll(runbookSnapshotTemplateResponse.Body)
 
 	if err != nil {
-		return err
+		return PublishRunbookRetry(state, runbookName, projectName, retryCount+1, err)
 	}
 
 	if runbookSnapshotTemplateResponse.StatusCode < 200 || runbookSnapshotTemplateResponse.StatusCode > 299 {
@@ -266,7 +292,7 @@ func PublishRunbook(state state.State, runbookName string, projectName string) e
 	err = json.Unmarshal(runbookSnapshotTemplateRaw, &runbookSnapshotTemplate)
 
 	if err != nil {
-		return err
+		return PublishRunbookRetry(state, runbookName, projectName, retryCount+1, err)
 	}
 
 	snapshot := map[string]any{
@@ -299,26 +325,26 @@ func PublishRunbook(state state.State, runbookName string, projectName string) e
 	snapshotJson, err := json.Marshal(snapshot)
 
 	if err != nil {
-		return err
+		return PublishRunbookRetry(state, runbookName, projectName, retryCount+1, err)
 	}
 
 	url = state.GetExternalServer() + "/api/" + state.Space + "/runbookSnapshots?publish=true"
 	runbookSnapshotRequest, err := http.NewRequest("POST", url+"?publish=true", bytes.NewBuffer(snapshotJson))
 
 	if err != nil {
-		return err
+		return PublishRunbookRetry(state, runbookName, projectName, retryCount+1, err)
 	}
 
 	runbookSnapshotResponse, err := myclient.HttpSession().DoRawRequest(runbookSnapshotRequest)
 
 	if err != nil {
-		return err
+		return PublishRunbookRetry(state, runbookName, projectName, retryCount+1, err)
 	}
 
 	runbookSnapshotResponseRaw, err := io.ReadAll(runbookSnapshotResponse.Body)
 
 	if err != nil {
-		return err
+		return PublishRunbookRetry(state, runbookName, projectName, retryCount+1, err)
 	}
 
 	if runbookSnapshotResponse.StatusCode < 200 || runbookSnapshotResponse.StatusCode > 299 {
@@ -333,7 +359,7 @@ func PublishRunbook(state state.State, runbookName string, projectName string) e
 	err = json.Unmarshal(runbookSnapshotResponseRaw, &runbookSnapshot)
 
 	if err != nil {
-		return err
+		return PublishRunbookRetry(state, runbookName, projectName, retryCount+1, err)
 	}
 
 	fmt.Println(runbookSnapshot)
