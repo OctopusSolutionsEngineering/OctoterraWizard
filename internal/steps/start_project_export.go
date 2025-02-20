@@ -19,6 +19,7 @@ import (
 	"github.com/mcasperson/OctoterraWizard/internal/wizard"
 	"github.com/samber/lo"
 	"net/url"
+	"strings"
 )
 
 type StartProjectExportStep struct {
@@ -144,7 +145,10 @@ func (s StartProjectExportStep) Execute(statusCallback func(message string)) err
 				process, err = deployments.GetDeploymentProcessByGitRef(myclient, myclient.GetSpaceID(), project, "refs/heads/"+gitPersistence.DefaultBranch())
 
 				if err != nil {
-					filterErrors = errors.Join(filterErrors, errors.Join(errors.New("failed to get deployment process by gitref \"refs/heads/"+gitPersistence.DefaultBranch()+"\" for project "+project.Name), err))
+					// "bad packet length" has been seen on projects with invalid git configuration, so we just ignore it
+					if strings.Index(err.Error(), "bad packet length") == -1 {
+						filterErrors = errors.Join(filterErrors, errors.Join(errors.New("failed to get deployment process by gitref \"refs/heads/"+gitPersistence.DefaultBranch()+"\" for project "+project.Name), err))
+					}
 					return false
 				}
 			}
