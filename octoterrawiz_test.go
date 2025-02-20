@@ -450,17 +450,17 @@ func TestProjectMigration(t *testing.T) {
 		}
 
 		if err := (steps.SpreadVariablesStep{BaseStep: steps.BaseStep{State: state}}).Execute(); err != nil {
-			t.Fatalf("Error executing SpreadVariablesStep: %v", err)
+			Fatal(t, "Error executing SpreadVariablesStep: %v", err)
 		}
 
 		if _, err := (steps.StepTemplateStep{BaseStep: steps.BaseStep{State: state}}).Execute(); err != nil {
-			t.Fatalf("Error executing StepTemplateStep: %v", err)
+			Fatal(t, "Error executing StepTemplateStep: %v", err)
 		}
 
 		steps.SpaceExportStep{BaseStep: steps.BaseStep{State: state}}.Execute(func(message string, body string, callback func(bool)) {
 			callback(true)
 		}, func(s string, err error) {
-			t.Fatalf("Error executing SpaceExportStep: %v", err)
+			Fatal(t, "Error executing SpaceExportStep: %v", err)
 		}, func(s string) {
 			// success
 		}, false, false)
@@ -468,7 +468,7 @@ func TestProjectMigration(t *testing.T) {
 		steps.ProjectExportStep{BaseStep: steps.BaseStep{State: state}}.Execute(func(message string, body string, callback func(bool)) {
 			callback(true)
 		}, func(s string, err error) {
-			t.Fatalf("Error executing ProjectExportStep: %v", err)
+			Fatal(t, "Error executing ProjectExportStep: %v", err)
 		}, func(s string) {
 			// success
 		}, func(s string) {
@@ -476,11 +476,11 @@ func TestProjectMigration(t *testing.T) {
 		})
 
 		if err := (steps.StartSpaceExportStep{BaseStep: steps.BaseStep{State: state}}).Execute(func(message string) {}); err != nil {
-			t.Fatalf("Error executing StartSpaceExportStep: %v", err)
+			Fatal(t, "Error executing StartSpaceExportStep: %v", err)
 		}
 
 		if err := (steps.StartProjectExportStep{BaseStep: steps.BaseStep{State: state}}).Execute(func(message string) {}); err != nil {
-			t.Fatalf("Error executing StartProjectExportStep: %v", err)
+			Fatal(t, "Error executing StartProjectExportStep: %v", err)
 		}
 
 		migratedSpaceClient, err := octoclient.CreateClient(container.URI, space.ID, test.ApiKey)
@@ -501,4 +501,14 @@ func TestProjectMigration(t *testing.T) {
 
 		return nil
 	})
+}
+
+func Fatal(t *testing.T, message string, err error) {
+	if uw, ok := err.(interface{ Unwrap() []error }); ok {
+		for _, e := range uw.Unwrap() {
+			t.Fatalf(message, e)
+		}
+	} else {
+		t.Fatalf(message, err)
+	}
 }
