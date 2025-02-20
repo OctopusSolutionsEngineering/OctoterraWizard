@@ -136,7 +136,7 @@ func (s StartProjectExportStep) Execute(statusCallback func(message string)) err
 	var filterErrors error = nil
 	regularProjects := lo.Filter(filteredProjects, func(project *projects2.Project, index int) bool {
 		process, err := deployments.GetDeploymentProcessByID(myclient, myclient.GetSpaceID(), project.DeploymentProcessID)
-		filterErrors = errors.Join(filterErrors, err)
+		filterErrors = errors.Join(filterErrors, errors.Join(errors.New("failed to get deployment process by ID "+project.DeploymentProcessID), err))
 
 		if err != nil {
 			return false
