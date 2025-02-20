@@ -50,7 +50,7 @@ func (s BackendSelectionStep) GetContainer(parent fyne.Window) *fyne.Container {
 		s.State.BackendType = value
 	})
 
-	if s.State.BackendType == "" {
+	if s.State.BackendType == "" || (s.State.BackendType != AzureStorage && s.State.BackendType != AwsS3) {
 		radio.SetSelected(AzureStorage)
 	} else {
 		radio.SetSelected(s.State.BackendType)
