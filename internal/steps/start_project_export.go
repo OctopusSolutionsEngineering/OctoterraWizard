@@ -161,6 +161,10 @@ func (s StartProjectExportStep) Execute(statusCallback func(message string)) err
 			}
 		}
 
+		if process == nil {
+			return false
+		}
+
 		return !lo.ContainsBy(process.Steps, func(step *deployments.DeploymentStep) bool {
 			return lo.ContainsBy(step.Actions, func(action *deployments.DeploymentAction) bool {
 				return action.ActionType == "Octopus.DeployRelease"
