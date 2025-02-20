@@ -179,8 +179,10 @@ func (s StartProjectExportStep) Execute(statusCallback func(message string)) err
 	runAndTaskError := s.serializeProjects(regularProjects, statusCallback)
 	runAndTaskError = errors.Join(runAndTaskError, s.deployProjects(regularProjects, statusCallback))
 
-	// Now we export projects that have "Deploy a release" steps. This ensures any child projects are available to
-	// be queried via a data source in the Terraform module.
+	/*
+		Now we export projects that have "Deploy a release" steps. This ensures any child projects are available to
+		be queried via a data source in the Terraform module.
+	*/
 	deployReleaseProjects := lo.Filter(filteredProjects, func(project *projects2.Project, index int) bool {
 		return !lo.ContainsBy(regularProjects, func(regularProject *projects2.Project) bool {
 			return project.ID == regularProject.ID
@@ -189,6 +191,14 @@ func (s StartProjectExportStep) Execute(statusCallback func(message string)) err
 
 	runAndTaskError = errors.Join(runAndTaskError, s.serializeProjects(deployReleaseProjects, statusCallback))
 	runAndTaskError = errors.Join(runAndTaskError, s.deployProjects(deployReleaseProjects, statusCallback))
+
+	/*
+		It is possible that a project has a "Deploy a release" step but also has a "Deploy a release" step in a child project.
+		So there is a deeper level of dependencies here. However, we rely on the step retry functionality in Octopus to
+		allow the "top level" project to be exported first, and then the child project to be exported later.
+		Maybe we need to be clever here and try to order these projects more intelligently, but for now we just rely on
+		the retry functionality.
+	*/
 	runAndTaskError = errors.Join(runAndTaskError, s.serializeProjects(filteredProjects, statusCallback))
 	runAndTaskError = errors.Join(runAndTaskError, s.deployProjects(filteredProjects, statusCallback))
 
