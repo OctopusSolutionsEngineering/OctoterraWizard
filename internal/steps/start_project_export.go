@@ -119,13 +119,13 @@ func (s StartProjectExportStep) Execute(statusCallback func(message string)) err
 	myclient, err := octoclient.CreateClient(s.State)
 
 	if err != nil {
-		return err
+		return errors.Join(errors.New("failed to create client"), err)
 	}
 
 	projects, err := projects2.GetAll(myclient, myclient.GetSpaceID())
 
 	if err != nil {
-		return err
+		return errors.Join(errors.New("failed to get all projects"), err)
 	}
 
 	filteredProjects := lo.Filter(projects, func(project *projects2.Project, index int) bool {
