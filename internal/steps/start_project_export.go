@@ -142,14 +142,14 @@ func (s StartProjectExportStep) Execute(statusCallback func(message string)) err
 			process, err = deployments.GetDeploymentProcessByGitRef(myclient, myclient.GetSpaceID(), project, "refs/heads/main")
 
 			if err != nil {
-				filterErrors = errors.Join(filterErrors, errors.Join(errors.New("failed to get deployment process by gitref \"refs/heads/main\""), err))
+				filterErrors = errors.Join(filterErrors, errors.Join(errors.New("failed to get deployment process by gitref \"refs/heads/main\" for project "+project.Name), err))
 				return false
 			}
 		} else {
 			process, err = deployments.GetDeploymentProcessByID(myclient, myclient.GetSpaceID(), project.DeploymentProcessID)
 
 			if err != nil {
-				filterErrors = errors.Join(filterErrors, errors.Join(errors.New("failed to get deployment process by ID "+project.DeploymentProcessID), err))
+				filterErrors = errors.Join(filterErrors, errors.Join(errors.New("failed to get deployment process by ID "+project.DeploymentProcessID+" for project "+project.Name), err))
 				return false
 			}
 		}
