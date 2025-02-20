@@ -139,11 +139,14 @@ func (s StartProjectExportStep) Execute(statusCallback func(message string)) err
 		var process *deployments.DeploymentProcess = nil
 
 		if project.IsVersionControlled {
-			process, err = deployments.GetDeploymentProcessByGitRef(myclient, myclient.GetSpaceID(), project, "refs/heads/main")
+			if gitPersistence, ok := project.PersistenceSettings.(projects2.GitPersistenceSettings); ok {
 
-			if err != nil {
-				filterErrors = errors.Join(filterErrors, errors.Join(errors.New("failed to get deployment process by gitref \"refs/heads/main\" for project "+project.Name), err))
-				return false
+				process, err = deployments.GetDeploymentProcessByGitRef(myclient, myclient.GetSpaceID(), project, "refs/heads/"+gitPersistence.DefaultBranch())
+
+				if err != nil {
+					filterErrors = errors.Join(filterErrors, errors.Join(errors.New("failed to get deployment process by gitref \"refs/heads/"+gitPersistence.DefaultBranch()+"\" for project "+project.Name), err))
+					return false
+				}
 			}
 		} else {
 			process, err = deployments.GetDeploymentProcessByID(myclient, myclient.GetSpaceID(), project.DeploymentProcessID)
