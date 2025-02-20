@@ -135,11 +135,23 @@ func (s StartProjectExportStep) Execute(statusCallback func(message string)) err
 	// We start by exporting projects that do not have "Deploy a release" steps
 	var filterErrors error = nil
 	regularProjects := lo.Filter(filteredProjects, func(project *projects2.Project, index int) bool {
-		process, err := deployments.GetDeploymentProcessByID(myclient, myclient.GetSpaceID(), project.DeploymentProcessID)
 
-		if err != nil {
-			filterErrors = errors.Join(filterErrors, errors.Join(errors.New("failed to get deployment process by ID "+project.DeploymentProcessID), err))
-			return false
+		var process *deployments.DeploymentProcess = nil
+
+		if project.IsVersionControlled {
+			process, err = deployments.GetDeploymentProcessByGitRef(myclient, myclient.GetSpaceID(), project, "refs/heads/main")
+
+			if err != nil {
+				filterErrors = errors.Join(filterErrors, errors.Join(errors.New("failed to get deployment process by gitref \"refs/heads/main\""), err))
+				return false
+			}
+		} else {
+			process, err = deployments.GetDeploymentProcessByID(myclient, myclient.GetSpaceID(), project.DeploymentProcessID)
+
+			if err != nil {
+				filterErrors = errors.Join(filterErrors, errors.Join(errors.New("failed to get deployment process by ID "+project.DeploymentProcessID), err))
+				return false
+			}
 		}
 
 		return !lo.ContainsBy(process.Steps, func(step *deployments.DeploymentStep) bool {
