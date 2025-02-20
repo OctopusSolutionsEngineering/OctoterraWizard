@@ -25,7 +25,8 @@ func (s BackendSelectionStep) GetContainer(parent fyne.Window) *fyne.Container {
 			Wizard:   s.Wizard,
 			BaseStep: BaseStep{State: s.State}})
 	}, func() {
-		if s.State.BackendType == AzureStorage {
+		// Use azure if the value is set to azure, is not set, or is not set to a recognized value
+		if s.isAzure() {
 			s.Wizard.ShowWizardStep(AzureTerraformStateStep{
 				Wizard:   s.Wizard,
 				BaseStep: BaseStep{State: s.State}})
@@ -50,7 +51,7 @@ func (s BackendSelectionStep) GetContainer(parent fyne.Window) *fyne.Container {
 		s.State.BackendType = value
 	})
 
-	if s.State.BackendType == "" || (s.State.BackendType != AzureStorage && s.State.BackendType != AwsS3) {
+	if s.isAzure() {
 		radio.SetSelected(AzureStorage)
 	} else {
 		radio.SetSelected(s.State.BackendType)
@@ -61,4 +62,8 @@ func (s BackendSelectionStep) GetContainer(parent fyne.Window) *fyne.Container {
 	content := container.NewBorder(nil, bottom, nil, nil, middle)
 
 	return content
+}
+
+func (s *BackendSelectionStep) isAzure() bool {
+	return s.State.BackendType == AzureStorage || s.State.BackendType == "" || (s.State.BackendType != AzureStorage && s.State.BackendType != AwsS3)
 }
