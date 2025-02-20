@@ -188,7 +188,7 @@ func (s StartProjectExportStep) serializeProjects(filteredProjects []*projects2.
 
 			var failedRunbookRun octoerrors.RunbookRunFailedError
 			if errors.As(err, &failedRunbookRun) {
-				runAndTaskError = errors.Join(runAndTaskError, failedRunbookRun)
+				runAndTaskError = errors.Join(runAndTaskError, errors.Join(errors.New("failed to run runbook \"__ 1. Serialize Project\" in project "+project.Name), failedRunbookRun))
 			} else {
 				return errors.Join(errors.New("failed to run runbook \"__ 1. Serialize Project\" for project "+project.Name), err)
 			}
@@ -203,7 +203,7 @@ func (s StartProjectExportStep) serializeProjects(filteredProjects []*projects2.
 		if err := infrastructure.WaitForTask(s.State, task.Value, func(message string) {
 			statusCallback("🔵 __ 1. Serialize Project for project " + task.Name + " is " + message + " (" + fmt.Sprint(serializeIndex) + "/" + fmt.Sprint(len(tasks)) + ")")
 		}); err != nil {
-			runAndTaskError = errors.Join(runAndTaskError, err)
+			runAndTaskError = errors.Join(runAndTaskError, errors.Join(errors.New("failed to get task state for task "+task.Name), err))
 		}
 		serializeIndex++
 	}
