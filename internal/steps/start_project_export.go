@@ -226,7 +226,7 @@ func (s StartProjectExportStep) deployProjects(filteredProjects []*projects2.Pro
 		if taskId, err := infrastructure.RunRunbook(s.State, "__ 2. Deploy Project", project.Name); err != nil {
 			var failedRunbookRun octoerrors.RunbookRunFailedError
 			if errors.As(err, &failedRunbookRun) {
-				runAndTaskError = errors.Join(runAndTaskError, failedRunbookRun)
+				runAndTaskError = errors.Join(runAndTaskError, errors.Join(errors.New("failed to run runbook \"__ 2. Deploy Project\" in project "+project.Name), failedRunbookRun))
 			} else {
 				return errors.Join(errors.New("Failed to run runbook \"__ 2. Deploy Project\" for project "+project.Name), err)
 			}
@@ -241,7 +241,7 @@ func (s StartProjectExportStep) deployProjects(filteredProjects []*projects2.Pro
 		if err := infrastructure.WaitForTask(s.State, task.Value, func(message string) {
 			statusCallback("🔵 __ 2. Deploy Project for project " + task.Name + " is " + message + " (" + fmt.Sprint(applyIndex) + "/" + fmt.Sprint(len(applyTasks)) + ")")
 		}); err != nil {
-			runAndTaskError = errors.Join(runAndTaskError, err)
+			runAndTaskError = errors.Join(runAndTaskError, errors.Join(errors.New("failed to get task state for task "+task.Name), err))
 		}
 		applyIndex++
 	}
