@@ -175,7 +175,7 @@ func (s StartProjectExportStep) serializeProjects(filteredProjects []*projects2.
 
 	for _, project := range filteredProjects {
 		if err := infrastructure.PublishRunbook(s.State, "__ 1. Serialize Project", project.Name); err != nil {
-			return errors.Join(errors.New("Failed to publish runbook \"__ 1. Serialize Project\" for ptoject "+project.Name), err)
+			return errors.Join(errors.New("failed to publish runbook \"__ 1. Serialize Project\" for project "+project.Name), err)
 		}
 
 		statusCallback("🔵 Published __ 1. Serialize Project runbook in project " + project.Name)
@@ -190,7 +190,7 @@ func (s StartProjectExportStep) serializeProjects(filteredProjects []*projects2.
 			if errors.As(err, &failedRunbookRun) {
 				runAndTaskError = errors.Join(runAndTaskError, failedRunbookRun)
 			} else {
-				return errors.Join(errors.New("Failed to run runbook \"__ 1. Serialize Project\" for project "+project.Name), err)
+				return errors.Join(errors.New("failed to run runbook \"__ 1. Serialize Project\" for project "+project.Name), err)
 			}
 		} else {
 			tasks = append(tasks, data.NameValuePair{Name: project.Name, Value: taskId})

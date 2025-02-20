@@ -485,7 +485,7 @@ func (s SpaceExportStep) deleteProject(myclient *client.Client, project *project
 func (s SpaceExportStep) deleteFeed(myclient *client.Client, feed feeds.IFeed) error {
 	fmt.Println("Attempting to delete feed " + fmt.Sprint(feed.GetID()))
 	if err := myclient.Feeds.DeleteByID(feed.GetID()); err != nil {
-		return err
+		return errors.Join(errors.New("failed to delete feed "+feed.GetName()), err)
 	}
 
 	return nil
@@ -494,7 +494,7 @@ func (s SpaceExportStep) deleteFeed(myclient *client.Client, feed feeds.IFeed) e
 func (s SpaceExportStep) deleteAccount(myclient *client.Client, account accounts.IAccount) error {
 	fmt.Println("Attempting to delete account " + fmt.Sprint(account.GetID()))
 	if err := myclient.Accounts.DeleteByID(account.GetID()); err != nil {
-		return err
+		return errors.Join(errors.New("failed to delete account "+account.GetName()), err)
 	}
 
 	return nil
@@ -508,7 +508,7 @@ func (s SpaceExportStep) renameAccount(myclient *client.Client, account accounts
 		allAccounts, err := accounts.GetAll(myclient, myclient.GetSpaceID())
 
 		if err != nil {
-			return err
+			return errors.Join(errors.New("failed to get all accounts"), err)
 		}
 
 		exactMatches := lo.Filter(allAccounts, func(account accounts.IAccount, index int) bool {
@@ -526,7 +526,7 @@ func (s SpaceExportStep) renameAccount(myclient *client.Client, account accounts
 
 	account.SetName(account.GetName() + " (old " + fmt.Sprint(index) + ")")
 	if _, err := accounts.Update(myclient, account); err != nil {
-		return err
+		return errors.Join(errors.New("failed to update account with name "+account.GetName()), err)
 	}
 
 	return nil
@@ -536,7 +536,7 @@ func (s SpaceExportStep) projectExists(myclient *client.Client) (bool, *projects
 	if project, err := projects.GetByName(myclient, myclient.GetSpaceID(), spaceManagementProject); err == nil {
 		return true, project, nil
 	} else {
-		return false, nil, err
+		return false, nil, errors.Join(errors.New("failed to get project with name "+spaceManagementProject), err)
 	}
 }
 
@@ -552,14 +552,14 @@ func (s SpaceExportStep) projectGroupExists(myclient *client.Client) (bool, *pro
 
 		return true, groups[0], nil
 	} else {
-		return false, nil, err
+		return false, nil, errors.Join(errors.New("failed to get all project groups"), err)
 	}
 }
 
 func (s SpaceExportStep) deleteLibraryVariableSet(myclient *client.Client, lvs *variables.LibraryVariableSet) error {
 	fmt.Println("Attempting to delete lvs " + fmt.Sprint(lvs.GetID()))
 	if err := myclient.LibraryVariableSets.DeleteByID(lvs.ID); err != nil {
-		return err
+		return errors.Join(errors.New("failed to delete library variable set with ID "+lvs.GetID()), err)
 	}
 
 	return nil
@@ -574,7 +574,7 @@ func (s SpaceExportStep) renameLibraryVariableSet(myclient *client.Client, lvs *
 		existingLvs, err := myclient.LibraryVariableSets.GetByPartialName(name)
 
 		if err != nil {
-			return err
+			return errors.Join(errors.New("filed to get library variable set by partial name "+name), err)
 		}
 
 		exactMatches := lo.Filter(existingLvs, func(lvs *variables.LibraryVariableSet, index int) bool {
@@ -609,7 +609,7 @@ func (s SpaceExportStep) feedExists(myclient *client.Client) (bool, feeds.IFeed,
 
 		return false, nil, nil
 	} else {
-		return false, nil, err
+		return false, nil, errors.Join(errors.New("failed to get all feeds"), err)
 	}
 }
 
@@ -625,6 +625,6 @@ func (s SpaceExportStep) accountExists(myclient *client.Client, accountName stri
 
 		return false, nil, nil
 	} else {
-		return false, nil, err
+		return false, nil, errors.Join(errors.New("failed to get all accounts"), err)
 	}
 }

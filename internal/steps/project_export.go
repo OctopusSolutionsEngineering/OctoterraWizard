@@ -343,7 +343,7 @@ func (s ProjectExportStep) Execute(prompt func(string, string, func(bool)), hand
 
 func (s ProjectExportStep) getProjects(myclient *client.Client) ([]*projects.Project, error) {
 	if allprojects, err := myclient.Projects.GetAll(); err != nil {
-		return nil, err
+		return nil, errors.Join(errors.New("failed to get all projects"), err)
 	} else {
 		return allprojects, nil
 	}
@@ -352,7 +352,7 @@ func (s ProjectExportStep) getProjects(myclient *client.Client) ([]*projects.Pro
 func (s ProjectExportStep) deleteRunbook(myclient *client.Client, runbook *runbooks.Runbook) error {
 	fmt.Println("Attempting to delete runbook " + runbook.ID)
 	if err := myclient.Runbooks.DeleteByID(runbook.ID); err != nil {
-		return err
+		return errors.Join(errors.New("failed to delete runbook with ID "+runbook.ID+" and name "+runbook.Name), err)
 	}
 
 	return nil
@@ -365,6 +365,6 @@ func (s ProjectExportStep) runbookExists(myclient *client.Client, projectId stri
 		}
 		return true, runbook, nil
 	} else {
-		return false, nil, err
+		return false, nil, errors.Join(errors.New("failed to get runbook by name "+runbookName+" in project "+projectId), err)
 	}
 }
