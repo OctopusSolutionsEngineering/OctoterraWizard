@@ -189,6 +189,8 @@ func (s StartProjectExportStep) Execute(statusCallback func(message string)) err
 
 	runAndTaskError = errors.Join(runAndTaskError, s.serializeProjects(deployReleaseProjects, statusCallback))
 	runAndTaskError = errors.Join(runAndTaskError, s.deployProjects(deployReleaseProjects, statusCallback))
+	runAndTaskError = errors.Join(runAndTaskError, s.serializeProjects(filteredProjects, statusCallback))
+	runAndTaskError = errors.Join(runAndTaskError, s.deployProjects(filteredProjects, statusCallback))
 
 	return runAndTaskError
 }
