@@ -351,7 +351,7 @@ func (c *VariableSpreader) SpreadAllVariables() error {
 	myclient, err := octoclient.CreateClient(c.State)
 
 	if err != nil {
-		return err
+		return errors.Join(errors.New("failed to create client"), err)
 	}
 
 	c.client = myclient
@@ -359,13 +359,13 @@ func (c *VariableSpreader) SpreadAllVariables() error {
 	libraryVariableSets, err := c.client.LibraryVariableSets.GetAll()
 
 	if err != nil {
-		return err
+		return errors.Join(errors.New("failed to get all library variable sets"), err)
 	}
 
 	projects, err := c.client.Projects.GetAll()
 
 	if err != nil {
-		return err
+		return errors.Join(errors.New("failed to get all projects"), err)
 	}
 
 	variableSets := []OwnerVariablePair{}
@@ -376,7 +376,7 @@ func (c *VariableSpreader) SpreadAllVariables() error {
 			variableSet, err := variables.GetVariableSet(c.client, c.client.GetSpaceID(), libraryVariableSet.VariableSetID)
 
 			if err != nil {
-				return errors.New("Failed to get variable set for library variable set " + libraryVariableSet.Name + ". Error was \"" + err.Error() + "\"")
+				return errors.New("failed to get variable set for library variable set " + libraryVariableSet.Name + ". Error was \"" + err.Error() + "\"")
 			}
 
 			variableSets = append(variableSets, OwnerVariablePair{
@@ -404,7 +404,7 @@ func (c *VariableSpreader) SpreadAllVariables() error {
 		err = c.spreadVariables(c.client, variableSet.OwnerID, variableSet.VariableSet)
 
 		if err != nil {
-			return err
+			return errors.Join(errors.New("failed to spread variables"), err)
 		}
 	}
 

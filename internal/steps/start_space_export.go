@@ -1,6 +1,7 @@
 package steps
 
 import (
+	"errors"
 	"fmt"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -116,7 +117,7 @@ func (s StartSpaceExportStep) GetContainer(parent fyne.Window) *fyne.Container {
 
 func (s StartSpaceExportStep) Execute(statusCallback func(message string)) (executeError error) {
 	if err := infrastructure.PublishRunbook(s.State, "__ 1. Serialize Space", "Octoterra Space Management"); err != nil {
-		return err
+		return errors.Join(errors.New("failed ot publish runbook \"__ 1. Serialize Space\""), err)
 	}
 
 	statusCallback("🔵 Published __ 1. Serialize Space runbook")
@@ -127,12 +128,12 @@ func (s StartSpaceExportStep) Execute(statusCallback func(message string)) (exec
 		if err := infrastructure.WaitForTask(s.State, taskId, func(message string) {
 			statusCallback("🔵 __ 1. Serialize Space is " + message)
 		}); err != nil {
-			return err
+			return errors.Join(errors.New("failed to get task status for task "+taskId), err)
 		}
 	}
 
 	if err := infrastructure.PublishRunbook(s.State, "__ 2. Deploy Space", "Octoterra Space Management"); err != nil {
-		return err
+		return errors.Join(errors.New("failed to publish runbook \"__ 2. Deploy Space\""), err)
 	}
 
 	statusCallback("🔵 Published __ 2. Deploy Space runbook")
@@ -143,7 +144,7 @@ func (s StartSpaceExportStep) Execute(statusCallback func(message string)) (exec
 		if err := infrastructure.WaitForTask(s.State, taskId, func(message string) {
 			statusCallback("🔵 __ 2. Deploy Space is " + message + ". This runbook can take quite some time (many hours) for large spaces.")
 		}); err != nil {
-			return err
+			return errors.Join(errors.New("failed to get task status for task "+taskId), err)
 		}
 	}
 

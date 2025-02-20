@@ -1,6 +1,7 @@
 package steps
 
 import (
+	"errors"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
@@ -97,47 +98,47 @@ func (s StepTemplateStep) Execute() (string, error) {
 
 	// Octopus - Serialize Space to Terraform
 	if err, message := query.InstallStepTemplate(myclient, s.State, "https://library.octopus.com/step-templates/e03c56a4-f660-48f6-9d09-df07e1ac90bd"); err != nil {
-		return message, err
+		return message, errors.Join(errors.New("failed to install step template"), err)
 	}
 
 	// Octopus - Serialize Project to Terraform
 	if err, message := query.InstallStepTemplate(myclient, s.State, "https://library.octopus.com/step-templates/e9526501-09d5-490f-ac3f-5079735fe041"); err != nil {
-		return message, err
+		return message, errors.Join(errors.New("failed to install step template"), err)
 	}
 
 	// Octopus - Populate Octoterra Space (S3 Backend)
 	if err, message := query.InstallStepTemplate(myclient, s.State, "https://library.octopus.com/step-templates/14d51af4-1c3d-4d41-9044-4304111d0cd8"); err != nil {
-		return message, err
+		return message, errors.Join(errors.New("failed to install step template"), err)
 	}
 
 	// Octopus - Populate Octoterra Space (Azure Backend)
 	if err, message := query.InstallStepTemplate(myclient, s.State, "https://library.octopus.com/step-templates/c15be981-3138-47c8-a935-ab388b7840be"); err != nil {
-		return message, err
+		return message, errors.Join(errors.New("failed to install step template"), err)
 	}
 
 	// Octopus - Add Runbook to Project (Azure Backend)
 	if err, message := query.InstallStepTemplate(myclient, s.State, "https://library.octopus.com/step-templates/9b206752-5a8c-40dd-84a8-94f08a42955c"); err != nil {
-		return message, err
+		return message, errors.Join(errors.New("failed to install step template"), err)
 	}
 
 	// Octopus - Add Runbook to Project (S3 Backend)
 	if err, message := query.InstallStepTemplate(myclient, s.State, "https://library.octopus.com/step-templates/8b8b0386-78f8-42c2-baea-2fdb9a57c32d"); err != nil {
-		return message, err
+		return message, errors.Join(errors.New("failed to install step template"), err)
 	}
 
 	// Octopus - Create Octoterra Space (Azure Backend)
 	if err, message := query.InstallStepTemplate(myclient, s.State, "https://library.octopus.com/step-templates/c9c5a6a2-0ce7-4d7a-8eb5-111ac44df24e"); err != nil {
-		return message, err
+		return message, errors.Join(errors.New("failed to install step template"), err)
 	}
 
 	// Octopus - Create Octoterra Space (S3 Backend)
 	if err, message := query.InstallStepTemplate(myclient, s.State, "https://library.octopus.com/step-templates/90a8dd76-6456-49f9-9c03-baf85442aa57"); err != nil {
-		return message, err
+		return message, errors.Join(errors.New("failed to install step template"), err)
 	}
 
 	// Octopus - Lookup Space ID
 	if err, message := query.InstallStepTemplate(myclient, s.State, "https://library.octopus.com/step-templates/324f747e-e2cd-439d-a660-774baf4991f2"); err != nil {
-		return message, err
+		return message, errors.Join(errors.New("failed to install step template"), err)
 	}
 
 	return "🟢 Step templates installed.", nil
