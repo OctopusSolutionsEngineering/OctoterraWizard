@@ -189,9 +189,6 @@ func (s StartProjectExportStep) Execute(statusCallback func(message string)) err
 		})
 	})
 
-	runAndTaskError = errors.Join(runAndTaskError, s.serializeProjects(deployReleaseProjects, statusCallback))
-	runAndTaskError = errors.Join(runAndTaskError, s.deployProjects(deployReleaseProjects, statusCallback))
-
 	/*
 		It is possible that a project has a "Deploy a release" step but also has a "Deploy a release" step in a child project.
 		So there is a deeper level of dependencies here. However, we rely on the step retry functionality in Octopus to
@@ -199,8 +196,8 @@ func (s StartProjectExportStep) Execute(statusCallback func(message string)) err
 		Maybe we need to be clever here and try to order these projects more intelligently, but for now we just rely on
 		the retry functionality.
 	*/
-	runAndTaskError = errors.Join(runAndTaskError, s.serializeProjects(filteredProjects, statusCallback))
-	runAndTaskError = errors.Join(runAndTaskError, s.deployProjects(filteredProjects, statusCallback))
+	runAndTaskError = errors.Join(runAndTaskError, s.serializeProjects(deployReleaseProjects, statusCallback))
+	runAndTaskError = errors.Join(runAndTaskError, s.deployProjects(deployReleaseProjects, statusCallback))
 
 	return runAndTaskError
 }
