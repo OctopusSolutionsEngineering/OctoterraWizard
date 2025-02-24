@@ -71,7 +71,7 @@ func (s ProjectExportStep) GetContainer(parent fyne.Window) *fyne.Container {
 	heading := widget.NewLabel("Project Serialization Runbooks")
 	heading.TextStyle = fyne.TextStyle{Bold: true}
 
-	intro := widget.NewLabel(strutil.TrimMultilineWhitespace(`Each project gets two runbooks, one to serialize it to a Terraform module, and the second to deploy it.`))
+	intro := widget.NewLabel(strutil.TrimMultilineWhitespace(`Each project gets two runbooks: one to serialize it to a Terraform module, and the second to deploy it.`))
 	s.infinite = widget.NewProgressBarInfinite()
 	s.infinite.Start()
 	s.infinite.Hide()
