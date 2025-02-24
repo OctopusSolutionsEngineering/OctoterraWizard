@@ -24,6 +24,7 @@ type State struct {
 	AzureApplicationId            string
 	AzurePassword                 string
 	ExcludeAllLibraryVariableSets bool
+	EnableVariableSpreading       bool
 }
 
 func (s State) GetExternalServer() string {
