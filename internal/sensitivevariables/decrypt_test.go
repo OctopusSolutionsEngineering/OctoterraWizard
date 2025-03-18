@@ -6,7 +6,7 @@ import (
 
 func TestDecryptSensitiveVariable(t *testing.T) {
 	// Prepare test data
-	masterKey := "6EdU6IWsCtMEwk0kPKflQQ==" // 16 bytes key for AES-128
+	masterKey := "6EdU6IWsCtMEwk0kPKflQQ=="
 	value := "tHdE5KI9QVdsFSq6F6HeSA==|7oD+XzuTFF1uCQLXm8A3eg=="
 
 	// Call the function to test
