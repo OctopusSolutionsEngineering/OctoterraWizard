@@ -143,14 +143,11 @@ func getVariableSetSecrets(ctx context.Context, db *sql.DB, masterKey string) (s
 						return "", err
 					}
 
-					escapedValue, err := json.Marshal(variableValue)
-
-					if err != nil {
+					if tfVar, err := writeVariableFile(variableName, variableValue); err != nil {
 						return "", err
+					} else {
+						builder.WriteString(tfVar)
 					}
-
-					builder.WriteString(variableName + " = " + string(escapedValue) + "\n")
-
 				}
 			}
 		}
