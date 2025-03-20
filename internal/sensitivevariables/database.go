@@ -7,17 +7,36 @@ import (
 	"fmt"
 	"github.com/mcasperson/OctoterraWizard/internal/naming"
 	"log"
+	"strconv"
 	"strings"
 	"time"
 )
 
+func GetDatabaseConnection(server string, port int, database string, username string, password string, ctx context.Context) (*sql.DB, error) {
+	dsn := "sqlserver://" + username + ":" + password + "@" + server + ":" + fmt.Sprint(port) + "?database=" + database
+	db, err := sql.Open("sqlserver", dsn)
+	if err != nil {
+		return nil, err
+	}
+
+	db.SetConnMaxLifetime(0)
+	db.SetMaxIdleConns(3)
+	db.SetMaxOpenConns(3)
+
+	return db, nil
+}
+
 // ExtractVariables extracts sensitive variables from the database and returns them as terraform variable values
-func ExtractVariables(server string, port int, database string, username string, password string, masterKey string) (string, error) {
+func ExtractVariables(server string, port string, database string, username string, password string, masterKey string) (string, error) {
+	portNum, err := strconv.Atoi(port)
+	if err != nil {
+		return "", err
+	}
+
 	ctx, stop := context.WithCancel(context.Background())
 	defer stop()
 
-	dsn := "sqlserver://" + username + ":" + password + "@" + server + ":" + fmt.Sprint(port) + "?database=" + database
-	db, err := sql.Open("sqlserver", dsn)
+	db, err := GetDatabaseConnection(server, portNum, database, username, password, ctx)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -27,12 +46,8 @@ func ExtractVariables(server string, port int, database string, username string,
 		}
 	}()
 
-	db.SetConnMaxLifetime(0)
-	db.SetMaxIdleConns(3)
-	db.SetMaxOpenConns(3)
-
 	// Test the connection
-	if err := pingDatabase(ctx, db); err != nil {
+	if err := PingDatabase(ctx, db); err != nil {
 		return "", err
 	}
 
@@ -42,7 +57,7 @@ func ExtractVariables(server string, port int, database string, username string,
 	return sensitiveVars, err
 }
 
-func pingDatabase(ctx context.Context, db *sql.DB) error {
+func PingDatabase(ctx context.Context, db *sql.DB) error {
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 	return db.PingContext(ctx)

@@ -21,7 +21,7 @@ func (s AdvancedOptionsStep) GetContainer(parent fyne.Window) *fyne.Container {
 			Wizard:   s.Wizard,
 			BaseStep: BaseStep{State: s.State}})
 	}, func() {
-		s.Wizard.ShowWizardStep(EnableVariableSpreading{
+		s.Wizard.ShowWizardStep(ExtractSecrets{
 			Wizard:   s.Wizard,
 			BaseStep: BaseStep{State: s.State}})
 	})
