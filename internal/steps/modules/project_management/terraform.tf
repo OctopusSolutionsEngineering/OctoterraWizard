@@ -163,11 +163,6 @@ data "octopusdeploy_worker_pools" "ubuntu_worker_pool" {
   take = 1
 }
 
-resource "octopusdeploy_library_variable_set" "sensitive_variables" {
-  name        = "OctoterraWizSecrets"
-  description = "Sensitive variables"
-}
-
 resource "octopusdeploy_runbook" "runbook" {
   project_id         = var.octopus_project_id
   name               = "__ 1. Serialize Project"
