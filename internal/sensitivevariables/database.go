@@ -437,7 +437,67 @@ func getCertificateSensitiveValues(ctx context.Context, db *sql.DB, masterKey st
 }
 
 func geFeedSensitiveValues(ctx context.Context, db *sql.DB, masterKey string) (string, error) {
-	return "", nil
+	var name string
+	var jsonValue string
+
+	timeout, cancel := context.WithTimeout(ctx, 60*time.Second)
+	defer cancel()
+	rows, err := db.QueryContext(timeout, "SELECT Name, JSON FROM Feed")
+	if err != nil {
+		return "", err
+	}
+
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Println(err.Error())
+		}
+	}()
+
+	var builder strings.Builder
+
+	for rows.Next() {
+		if err = rows.Scan(&name, &jsonValue); err != nil {
+			return "", err
+		}
+
+		var result map[string]interface{}
+
+		if err := json.Unmarshal([]byte(jsonValue), &result); err != nil {
+			return "", err
+		}
+
+		// Each account type stores different secrets
+		password, passwordOk := result["Password"].(string)
+		secretKey, secretKeyOk := result["SecretKey"].(string)
+
+		// Must have one sensitive value to extract
+		if !(passwordOk || secretKeyOk) {
+			continue
+		}
+
+		var variableName string
+		var variableValue string
+		if passwordOk {
+			variableName = naming.FeedSecretName(fmt.Sprint(result["Name"]))
+			variableValue, err = DecryptSensitiveVariable(masterKey, fmt.Sprint(password))
+		} else if secretKeyOk {
+			variableName = naming.FeedSecretKeyName(fmt.Sprint(result["Name"]))
+			variableValue, err = DecryptSensitiveVariable(masterKey, fmt.Sprint(secretKey))
+		}
+
+		if err != nil {
+			return "", err
+		}
+
+		if tfVar, err := writeVariableFile(variableName, variableValue); err != nil {
+			return "", err
+		} else {
+			builder.WriteString(tfVar)
+		}
+
+	}
+
+	return builder.String(), nil
 }
 
 func getGitCredsSensitiveValues(ctx context.Context, db *sql.DB, masterKey string) (string, error) {
