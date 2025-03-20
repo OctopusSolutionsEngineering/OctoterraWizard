@@ -515,7 +515,7 @@ resource "octopusdeploy_runbook_process" "deploy_space_aws" {
         "Octopus.Action.GoogleCloud.ImpersonateServiceAccount"  = "False"
         "Octopus.Action.Terraform.GoogleCloudAccount"           = "False"
         "Octopus.Action.Terraform.AdditionalActionParams"       = "-var=octopus_server=#{OctoterraApply.Octopus.ServerUrl} -var=octopus_apikey=#{OctoterraApply.Octopus.ApiKey} -var=octopus_space_id=#{OctoterraApply.Octopus.SpaceID} #{if OctoterraApply.Terraform.AdditionalApplyParams}#{OctoterraApply.Terraform.AdditionalApplyParams}#{/if}"
-        "Octopus.Action.Terraform.FileSubstitution"             = "**/project_variable_sensitive*.tf"
+        "Octopus.Action.Terraform.FileSubstitution"             = "**/project_variable_sensitive*.tf\n**/terraform.tfvars"
         "Octopus.Action.Script.ScriptSource"                    = "Package"
         "Octopus.Action.GoogleCloud.UseVMServiceAccount"        = "True"
         "Octopus.Action.Terraform.ManagedAccount"               = "AWS"
@@ -588,7 +588,7 @@ resource "octopusdeploy_runbook_process" "deploy_space_azure" {
           "FeedId" = data.octopusdeploy_feeds.built_in_feed.feeds[0].id
         })
         "Octopus.Action.Terraform.Workspace"                    = "#{OctoterraApply.Terraform.Workspace.Name}"
-        "Octopus.Action.Terraform.FileSubstitution"             = "**/project_variable_sensitive*.tf"
+        "Octopus.Action.Terraform.FileSubstitution"             = "**/project_variable_sensitive*.tf\n**/terraform.tfvars"
         "Octopus.Action.Aws.AssumeRole"                         = "False"
         "Octopus.Action.Terraform.TemplateDirectory"            = "space_population"
         "Octopus.Action.GoogleCloud.ImpersonateServiceAccount"  = "False"
