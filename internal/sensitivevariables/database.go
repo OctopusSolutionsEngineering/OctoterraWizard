@@ -104,8 +104,16 @@ func getVariableSetSecrets(ctx context.Context, db *sql.DB, masterKey string) (s
 						continue
 					}
 
+					// only include sensitive variables
 					if fmt.Sprint(variableMap["Type"]) != "Sensitive" {
 						continue
+					}
+
+					// only include the latest values (i.e. not those in a release)
+					if isFrozen, ok := variableMap["IsFrozen"].(bool); ok {
+						if isFrozen {
+							continue
+						}
 					}
 
 					variableName := naming.VariableSecretName(fmt.Sprint(variableMap["Id"]))
