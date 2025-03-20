@@ -212,7 +212,7 @@ data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle" {
 data "octopusdeploy_feeds" "built_in_feed" {
   feed_type    = "BuiltIn"
   ids          = null
-  partial_name = ""
+  partial_name = "Octopus Server (built-in)"
   skip         = 0
   take         = 1
 }

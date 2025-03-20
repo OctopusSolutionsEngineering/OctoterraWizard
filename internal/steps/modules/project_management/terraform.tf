@@ -151,7 +151,7 @@ data "octopusdeploy_feeds" "docker_feed" {
 data "octopusdeploy_feeds" "built_in_feed" {
   feed_type    = "BuiltIn"
   ids          = null
-  partial_name = ""
+  partial_name = "Octopus Server (built-in)"
   skip         = 0
   take         = 1
 }
