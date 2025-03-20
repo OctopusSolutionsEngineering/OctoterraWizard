@@ -99,6 +99,11 @@ func getVariableSetSecrets(ctx context.Context, db *sql.DB, masterKey string) (s
 
 				if variableMap, ok := variable.(map[string]interface{}); ok {
 
+					// Don't include the library variable set where we save the secrets
+					if fmt.Sprint(variableMap["Name"]) == SecretsVariableName {
+						continue
+					}
+
 					if fmt.Sprint(variableMap["Type"]) != "Sensitive" {
 						continue
 					}
