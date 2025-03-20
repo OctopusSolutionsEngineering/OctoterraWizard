@@ -259,6 +259,11 @@ resource "octopusdeploy_library_variable_set" "octopus_library_variable_set" {
   description = "Common variables used by Octoterra to deploy Octopus resources"
 }
 
+resource "octopusdeploy_library_variable_set" "sensitive_variables" {
+  name        = "OctoterraWizSecrets"
+  description = "Sensitive variables"
+}
+
 resource "octopusdeploy_variable" "destination_server" {
   name         = "Octopus.Destination.Server"
   type         = "String"
@@ -369,7 +374,7 @@ resource "octopusdeploy_project" "space_management_project" {
   project_group_id                     = octopusdeploy_project_group.octoterra.id
   tenanted_deployment_participation = "Untenanted"
   # Link all existing library variables sets except for any that start with "Octoterra" as these are old variable sets
-  included_library_variable_sets = concat([for l in data.octopusdeploy_library_variable_sets.all_variable_sets.library_variable_sets : l.id if !startswith(l.name, "Octoterra")], [octopusdeploy_library_variable_set.octopus_library_variable_set.id])
+  included_library_variable_sets = concat([for l in data.octopusdeploy_library_variable_sets.all_variable_sets.library_variable_sets : l.id if !startswith(l.name, "Octoterra")], [octopusdeploy_library_variable_set.octopus_library_variable_set.id], [octopusdeploy_library_variable_set.sensitive_variables.id])
 
   versioning_strategy {
     template = "#{Octopus.Version.LastMajor}.#{Octopus.Version.LastMinor}.#{Octopus.Version.LastPatch}.#{Octopus.Version.NextRevision}"

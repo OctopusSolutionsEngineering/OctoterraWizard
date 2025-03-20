@@ -163,6 +163,11 @@ data "octopusdeploy_worker_pools" "ubuntu_worker_pool" {
   take = 1
 }
 
+resource "octopusdeploy_library_variable_set" "sensitive_variables" {
+  name        = "OctoterraWizSecrets"
+  description = "Sensitive variables"
+}
+
 resource "octopusdeploy_runbook" "runbook" {
   project_id         = var.octopus_project_id
   name               = "__ 1. Serialize Project"
@@ -214,7 +219,7 @@ resource "octopusdeploy_runbook_process" "runbook" {
         "SerializeProject.Exported.Space.Id" = "#{Octopus.Space.Id}"
         "SerializeProject.Exported.Project.IgnoreVariableChanges" = "False"
         "SerializeProject.Exported.Project.IgnoreCacValues" = "False"
-        "Exported.Project.IgnoredLibraryVariableSet" = "Octoterra"
+        "Exported.Project.IgnoredLibraryVariableSet" = "Octoterra,OctoterraWizSecrets"
         "SerializeProject.Exported.Project.IgnoreAllChanges" = "False"
         "SerializeProject.Project.Space.DefaultSecrets" = var.default_secret_variables
         "SerializeProject.ThisInstance.Api.Key" = "#{Octopus.Source.ApiKey}"

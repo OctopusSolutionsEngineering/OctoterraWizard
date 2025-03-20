@@ -16,6 +16,7 @@ import (
 	"github.com/mcasperson/OctoterraWizard/internal/logutil"
 	"github.com/mcasperson/OctoterraWizard/internal/octoclient"
 	"github.com/mcasperson/OctoterraWizard/internal/query"
+	"github.com/mcasperson/OctoterraWizard/internal/sensitivevariables"
 	"github.com/mcasperson/OctoterraWizard/internal/strutil"
 	"github.com/mcasperson/OctoterraWizard/internal/wizard"
 	"github.com/samber/lo"
@@ -153,7 +154,7 @@ func (s ProjectExportStep) Execute(prompt func(string, string, func(bool)), hand
 		return project.Name != spaceManagementProject
 	})
 
-	lvsExists, lvs, err := query.LibraryVariableSetExists(myclient)
+	lvsExists, lvs, err := query.LibraryVariableSetExists(myclient, "Octoterra")
 
 	if err != nil {
 		handleError("🔴 Failed to get the library variable set Octoterra", err)
@@ -162,6 +163,18 @@ func (s ProjectExportStep) Execute(prompt func(string, string, func(bool)), hand
 
 	if !lvsExists {
 		handleError("🔴 The library variable set Octoterra could not be found", errors.New("resource not found"))
+		return
+	}
+
+	varsLvsExists, varsLvs, err := query.LibraryVariableSetExists(myclient, sensitivevariables.SecretsLibraryVariableSetName)
+
+	if err != nil {
+		handleError("🔴 Failed to get the library variable set "+sensitivevariables.SecretsLibraryVariableSetName, err)
+		return
+	}
+
+	if !varsLvsExists {
+		handleError("🔴 The library variable set "+sensitivevariables.SecretsLibraryVariableSetName+" could not be found", errors.New("resource not found"))
 		return
 	}
 
@@ -327,7 +340,7 @@ func (s ProjectExportStep) Execute(prompt func(string, string, func(bool)), hand
 			return
 		}
 
-		projectResource.IncludedLibraryVariableSets = append(projectResource.IncludedLibraryVariableSets, lvs.ID)
+		projectResource.IncludedLibraryVariableSets = append(projectResource.IncludedLibraryVariableSets, lvs.ID, varsLvs.ID)
 
 		_, err = projects.Update(myclient, projectResource)
 
