@@ -501,7 +501,62 @@ func geFeedSensitiveValues(ctx context.Context, db *sql.DB, masterKey string) (s
 }
 
 func getGitCredsSensitiveValues(ctx context.Context, db *sql.DB, masterKey string) (string, error) {
-	return "", nil
+	var id string
+	var jsonValue string
+
+	timeout, cancel := context.WithTimeout(ctx, 60*time.Second)
+	defer cancel()
+	rows, err := db.QueryContext(timeout, "SELECT Id, JSON FROM GitCredential")
+	if err != nil {
+		return "", err
+	}
+
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Println(err.Error())
+		}
+	}()
+
+	var builder strings.Builder
+
+	for rows.Next() {
+		if err = rows.Scan(&id, &jsonValue); err != nil {
+			return "", err
+		}
+
+		var result map[string]interface{}
+
+		if err := json.Unmarshal([]byte(jsonValue), &result); err != nil {
+			return "", err
+		}
+
+		gitCredName := naming.GitCredentialSecretName(id)
+
+		details, detailsOk := result["details"].(map[string]interface{})
+
+		if !detailsOk {
+			return "", errors.New("details is not a map")
+		}
+
+		sensitiveValue, sensitiveValueOk := details["Password"].(string)
+
+		if sensitiveValueOk {
+			decryptedSensitiveValue, err := DecryptSensitiveVariable(masterKey, fmt.Sprint(sensitiveValue))
+
+			if err != nil {
+				return "", err
+			}
+
+			if tfVar, err := writeVariableFile(gitCredName, decryptedSensitiveValue); err != nil {
+				return "", err
+			} else {
+				builder.WriteString(tfVar)
+			}
+		}
+
+	}
+
+	return builder.String(), nil
 }
 
 func getStepTemplateSensitiveValues(ctx context.Context, db *sql.DB, masterKey string) (string, error) {

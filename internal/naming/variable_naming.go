@@ -33,6 +33,10 @@ func TenantVariableSecretName(id string) string {
 	return "tenantvariable_" + hash.Sha256Hash(id) + "_sensitive_value"
 }
 
+func GitCredentialSecretName(id string) string {
+	return "gitcredential_" + hash.Sha256Hash(id) + "_sensitive_value"
+}
+
 func CertificateDataName(name string) string {
 	return "certificate_" + sanitizeName(name) + "_data"
 }
