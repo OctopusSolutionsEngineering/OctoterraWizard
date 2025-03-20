@@ -197,7 +197,7 @@ func (s SpaceExportStep) Execute(prompt func(string, string, func(bool)), handle
 		}
 	}
 
-	lvsExists, lvs, err := query.LibraryVariableSetExists(myclient)
+	lvsExists, lvs, err := query.LibraryVariableSetExists(myclient, "Octoterra")
 
 	if lvsExists && !attemptedLvsDelete {
 		deleteLvsFunc := func(b bool) {
