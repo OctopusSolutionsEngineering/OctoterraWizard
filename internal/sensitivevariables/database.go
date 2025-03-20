@@ -12,8 +12,13 @@ import (
 	"time"
 )
 
-func GetDatabaseConnection(server string, port int, database string, username string, password string, ctx context.Context) (*sql.DB, error) {
-	dsn := "sqlserver://" + username + ":" + password + "@" + server + ":" + fmt.Sprint(port) + "?database=" + database
+func GetDatabaseConnection(server string, port string, database string, username string, password string, ctx context.Context) (*sql.DB, error) {
+	portNum, err := strconv.Atoi(port)
+	if err != nil {
+		return nil, err
+	}
+
+	dsn := "sqlserver://" + username + ":" + password + "@" + server + ":" + fmt.Sprint(portNum) + "?database=" + database
 	db, err := sql.Open("sqlserver", dsn)
 	if err != nil {
 		return nil, err
@@ -28,15 +33,10 @@ func GetDatabaseConnection(server string, port int, database string, username st
 
 // ExtractVariables extracts sensitive variables from the database and returns them as terraform variable values
 func ExtractVariables(server string, port string, database string, username string, password string, masterKey string) (string, error) {
-	portNum, err := strconv.Atoi(port)
-	if err != nil {
-		return "", err
-	}
-
 	ctx, stop := context.WithCancel(context.Background())
 	defer stop()
 
-	db, err := GetDatabaseConnection(server, portNum, database, username, password, ctx)
+	db, err := GetDatabaseConnection(server, port, database, username, password, ctx)
 	if err != nil {
 		log.Fatal(err)
 	}
