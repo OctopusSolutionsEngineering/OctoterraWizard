@@ -394,28 +394,39 @@ func TestProjectMigration(t *testing.T) {
 		}
 
 		state := state.State{
-			BackendType:               "AWS S3",
-			Server:                    "http://localhost:8080", // The address used by Octopus when running tasks, which could be in nested containers
-			ServerExternal:            container.URI,           // The address used by the wizard
-			ApiKey:                    test.ApiKey,
-			Space:                     newSpaceId,
-			DestinationServer:         "http://localhost:8080",
-			DestinationServerExternal: container.URI,
-			DestinationApiKey:         test.ApiKey,
-			DestinationSpace:          space.ID,
-			AwsAccessKey:              os.Getenv("AWS_ACCESS_KEY_ID"),
-			AwsSecretKey:              os.Getenv("AWS_SECRET_ACCESS_KEY"),
-			AwsS3Bucket:               os.Getenv("AWS_DEFAULT_BUCKET"),
-			AwsS3BucketRegion:         os.Getenv("AWS_DEFAULT_REGION"),
-			PromptForDelete:           false,
-			UseContainerImages:        false,
-			AzureResourceGroupName:    "",
-			AzureStorageAccountName:   "",
-			AzureContainerName:        "",
-			AzureSubscriptionId:       "",
-			AzureTenantId:             "",
-			AzureApplicationId:        "",
-			AzurePassword:             "",
+			BackendType:                   "AWS S3",
+			Server:                        "http://localhost:8080", // The address used by Octopus when running tasks, which could be in nested containers
+			ServerExternal:                container.URI,           // The address used by the wizard
+			ApiKey:                        test.ApiKey,
+			Space:                         newSpaceId,
+			DestinationServer:             "http://localhost:8080",
+			DestinationServerExternal:     container.URI,
+			DestinationApiKey:             test.ApiKey,
+			DestinationSpace:              space.ID,
+			AwsAccessKey:                  os.Getenv("AWS_ACCESS_KEY_ID"),
+			AwsSecretKey:                  os.Getenv("AWS_SECRET_ACCESS_KEY"),
+			AwsS3Bucket:                   os.Getenv("AWS_DEFAULT_BUCKET"),
+			AwsS3BucketRegion:             os.Getenv("AWS_DEFAULT_REGION"),
+			PromptForDelete:               false,
+			UseContainerImages:            false,
+			AzureResourceGroupName:        "",
+			AzureStorageAccountName:       "",
+			AzureContainerName:            "",
+			AzureSubscriptionId:           "",
+			AzureTenantId:                 "",
+			AzureApplicationId:            "",
+			AzurePassword:                 "",
+			ExcludeAllLibraryVariableSets: false,
+			EnableVariableSpreading:       false,
+			// The test framework needs to be set up to expose the database and define a known master key.
+			// This is not done yet.
+			// Once the test framework is set up to expose the database, the following values can be used:
+			DatabaseServer:    "localhost",
+			DatabaseUser:      "SA",
+			DatabasePass:      "Password01!",
+			DatabasePort:      "1433",
+			DatabaseName:      "Octopus",
+			DatabaseMasterKey: "",
 		}
 
 		// need to install pip and terraform onto the Octopus container
@@ -449,9 +460,10 @@ func TestProjectMigration(t *testing.T) {
 			return err
 		}
 
-		if err := (steps.SpreadVariablesStep{BaseStep: steps.BaseStep{State: state}}).Execute(); err != nil {
-			Fatal(t, "Error executing SpreadVariablesStep: %v", err)
-		}
+		// This can be enabled once the test framework is set up to expose the database
+		//if err := (steps.ExtractSecrets{BaseStep: steps.BaseStep{State: state}}).Execute(); err != nil {
+		//	Fatal(t, "Error executing ExtractSecrets: %v", err)
+		//}
 
 		if _, err := (steps.StepTemplateStep{BaseStep: steps.BaseStep{State: state}}).Execute(); err != nil {
 			Fatal(t, "Error executing StepTemplateStep: %v", err)
