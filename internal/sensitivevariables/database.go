@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 )
+import _ "github.com/microsoft/go-mssqldb"
 
 func GetDatabaseConnection(server string, port string, database string, username string, password string, ctx context.Context) (*sql.DB, error) {
 	portNum, err := strconv.Atoi(port)

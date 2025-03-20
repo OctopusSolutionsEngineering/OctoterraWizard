@@ -41,7 +41,6 @@ func (s ExtractSecrets) GetContainer(parent fyne.Window) *fyne.Container {
 			Wizard:   s.Wizard,
 			BaseStep: BaseStep{State: s.State}})
 	}, func() {
-		s.result.SetText("🔵 Validating Octopus credentials.")
 		s.dbServer.Disable()
 		s.port.Disable()
 		s.database.Disable()
@@ -137,8 +136,6 @@ func (s ExtractSecrets) GetContainer(parent fyne.Window) *fyne.Container {
 	s.password.OnChanged = validation
 	s.masterKey.OnChanged = validation
 
-	result := widget.NewLabel("")
-
 	s.extractVariables = widget.NewButton("Extract sensitive values", func() {
 		next.Disable()
 		previous.Disable()
@@ -149,7 +146,7 @@ func (s ExtractSecrets) GetContainer(parent fyne.Window) *fyne.Container {
 		s.port.Disable()
 		s.masterKey.Disable()
 		s.extractVariables.Disable()
-		result.SetText("🔵 Spreading sensitive variables. This can take a little while.")
+		s.result.SetText("🔵 Extracting sensitive values.")
 		s.extractDone = true
 
 		go func() {
@@ -161,16 +158,16 @@ func (s ExtractSecrets) GetContainer(parent fyne.Window) *fyne.Container {
 					fmt.Println("Failed to write error to file")
 				}
 
-				result.SetText("🔴 An error was raised while attempting to extract the sensitive values." + err.Error())
+				s.result.SetText("🔴 An error was raised while attempting to extract the sensitive values." + err.Error())
 			} else {
-				result.SetText("🟢 Sensitive values have been extracted.")
+				s.result.SetText("🟢 Sensitive values have been extracted.")
 			}
 		}()
 	})
 
-	formLayout := container.New(layout.NewFormLayout(), serverLabel, s.dbServer, portLabel, s.port, databaseLabel, s.database, usernameLabel, s.username, passwordLabel, s.password, masterKeyPassword, s.masterKey, s.extractVariables, infinite, result)
+	formLayout := container.New(layout.NewFormLayout(), serverLabel, s.dbServer, portLabel, s.port, databaseLabel, s.database, usernameLabel, s.username, passwordLabel, s.password, masterKeyPassword, s.masterKey)
 
-	middle := container.New(layout.NewVBoxLayout(), heading, introText, link, formLayout, s.result)
+	middle := container.New(layout.NewVBoxLayout(), heading, introText, link, formLayout, s.extractVariables, infinite, s.result)
 
 	content := container.NewBorder(nil, bottom, nil, nil, middle)
 
