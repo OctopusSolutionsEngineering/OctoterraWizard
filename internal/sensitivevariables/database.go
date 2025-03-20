@@ -568,7 +568,63 @@ func getStepsSensitiveValues(ctx context.Context, db *sql.DB, masterKey string) 
 }
 
 func getTargetSensitiveValues(ctx context.Context, db *sql.DB, masterKey string) (string, error) {
-	return "", nil
+	var id string
+	var jsonValue string
+
+	timeout, cancel := context.WithTimeout(ctx, 60*time.Second)
+	defer cancel()
+	rows, err := db.QueryContext(timeout, "SELECT Id, JSON FROM Machine")
+	if err != nil {
+		return "", err
+	}
+
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Println(err.Error())
+		}
+	}()
+
+	var builder strings.Builder
+
+	for rows.Next() {
+		if err = rows.Scan(&id, &jsonValue); err != nil {
+			return "", err
+		}
+
+		var result map[string]interface{}
+
+		if err := json.Unmarshal([]byte(jsonValue), &result); err != nil {
+			return "", err
+		}
+
+		// Note that as at 0.40.4 the TF provider does not expose the password for an offline target
+		gitCredName := naming.MachineSecretName(id)
+
+		endpoint, endpointOk := result["Endpoint"].(map[string]interface{})
+
+		if !endpointOk {
+			return "", errors.New("Endpoint is not a map")
+		}
+
+		sensitiveValue, sensitiveValueOk := endpoint["SensitiveVariablesEncryptionPassword"].(string)
+
+		if sensitiveValueOk {
+			decryptedSensitiveValue, err := DecryptSensitiveVariable(masterKey, fmt.Sprint(sensitiveValue))
+
+			if err != nil {
+				return "", err
+			}
+
+			if tfVar, err := writeVariableFile(gitCredName, decryptedSensitiveValue); err != nil {
+				return "", err
+			} else {
+				builder.WriteString(tfVar)
+			}
+		}
+
+	}
+
+	return builder.String(), nil
 }
 
 func writeVariableFile(variableName string, variableValue string) (string, error) {
