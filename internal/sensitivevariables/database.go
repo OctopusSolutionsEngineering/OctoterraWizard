@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/mcasperson/OctoterraWizard/internal/naming"
 	"log"
@@ -308,7 +309,76 @@ func getTenantVarSensitiveValues(ctx context.Context, db *sql.DB, masterKey stri
 }
 
 func getCertificateSensitiveValues(ctx context.Context, db *sql.DB, masterKey string) (string, error) {
-	return "", nil
+	var name string
+	var jsonValue string
+
+	timeout, cancel := context.WithTimeout(ctx, 60*time.Second)
+	defer cancel()
+	rows, err := db.QueryContext(timeout, "SELECT Name, JSON FROM Certificate")
+	if err != nil {
+		return "", err
+	}
+
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Println(err.Error())
+		}
+	}()
+
+	var builder strings.Builder
+
+	for rows.Next() {
+		if err = rows.Scan(&name, &jsonValue); err != nil {
+			return "", err
+		}
+
+		var result map[string]interface{}
+
+		if err := json.Unmarshal([]byte(jsonValue), &result); err != nil {
+			return "", err
+		}
+
+		// Each account type stores different secrets
+		certificate, certificateOk := result["CertificateData"].(string)
+
+		if !certificateOk {
+			return "", errors.New("CertificateData is not a string")
+		}
+
+		password, passwordOk := result["Password"].(string)
+
+		certDataName := naming.CertificateDataName(name)
+		certPassName := naming.CertificatePasswordName(name)
+
+		certValue, err := DecryptSensitiveVariable(masterKey, fmt.Sprint(certificate))
+
+		if err != nil {
+			return "", err
+		}
+
+		if tfVar, err := writeVariableFile(certDataName, certValue); err != nil {
+			return "", err
+		} else {
+			builder.WriteString(tfVar)
+		}
+
+		if passwordOk {
+			passwordValue, err := DecryptSensitiveVariable(masterKey, fmt.Sprint(password))
+
+			if err != nil {
+				return "", err
+			}
+
+			if tfVar, err := writeVariableFile(certPassName, passwordValue); err != nil {
+				return "", err
+			} else {
+				builder.WriteString(tfVar)
+			}
+		}
+
+	}
+
+	return builder.String(), nil
 }
 
 func geFeedSensitiveValues(ctx context.Context, db *sql.DB, masterKey string) (string, error) {
