@@ -92,6 +92,13 @@ func main() {
 			AzureApplicationId:            os.Getenv("AZURE_CLIENT_ID"),
 			AzurePassword:                 os.Getenv("AZURE_CLIENT_SECRET"),
 			ExcludeAllLibraryVariableSets: strings.ToLower(os.Getenv("OCTOTERRAWIZ_EXCLUDE_ALL_LIBRARY_VARIABLE_SETS")) == "true",
+			EnableVariableSpreading:       false,
+			DatabaseServer:                os.Getenv("OCTOTERRAWIZ_DATABASE_SERVER"),
+			DatabaseUser:                  os.Getenv("OCTOTERRAWIZ_DATABASE_USER"),
+			DatabasePass:                  os.Getenv("OCTOTERRAWIZ_DATABASE_PASS"),
+			DatabasePort:                  os.Getenv("OCTOTERRAWIZ_DATABASE_PORT"),
+			DatabaseName:                  os.Getenv("OCTOTERRAWIZ_DATABASE_NAME"),
+			DatabaseMasterKey:             os.Getenv("OCTOTERRAWIZ_DATABASE_MASTERKEY"),
 		}},
 	})
 	wiz.Window.ShowAndRun()
