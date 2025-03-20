@@ -29,6 +29,10 @@ func AccountCertName(name string) string {
 	return "account_" + sanitizeName(name) + "_cert"
 }
 
+func TenantVariableSecretName(id string) string {
+	return "tenantvariable_" + hash.Sha256Hash(id) + "_sensitive_value"
+}
+
 // sanitizeName creates a string that can be used as a name for HCL resources
 // From the Terraform docs:
 // A name must start with a letter or underscore and may contain only letters, digits, underscores, and dashes.

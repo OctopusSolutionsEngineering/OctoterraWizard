@@ -72,6 +72,69 @@ func ExtractVariables(server string, port string, database string, username stri
 
 	sensitiveValues.WriteString(accountCreds)
 
+	// Get the tenant vars passwords
+	tenantVars, err := getTenantVarSensitiveValues(ctx, db, masterKey)
+
+	if err != nil {
+		return "", err
+	}
+
+	sensitiveValues.WriteString(tenantVars)
+
+	// Get the feed passwords
+	feedVars, err := geFeedSensitiveValues(ctx, db, masterKey)
+
+	if err != nil {
+		return "", err
+	}
+
+	sensitiveValues.WriteString(feedVars)
+
+	// Get the certificates
+	certificates, err := getCertificateSensitiveValues(ctx, db, masterKey)
+
+	if err != nil {
+		return "", err
+	}
+
+	sensitiveValues.WriteString(certificates)
+
+	// Get the git credentials
+	gitCreds, err := getGitCredsSensitiveValues(ctx, db, masterKey)
+
+	if err != nil {
+		return "", err
+	}
+
+	sensitiveValues.WriteString(gitCreds)
+
+	// Get the step template vars
+	stepTemplateVars, err := getStepTemplateSensitiveValues(ctx, db, masterKey)
+
+	if err != nil {
+		return "", err
+	}
+
+	sensitiveValues.WriteString(stepTemplateVars)
+
+	// Get the step vars
+	stepVars, err := getStepsSensitiveValues(ctx, db, masterKey)
+
+	if err != nil {
+		return "", err
+	}
+
+	sensitiveValues.WriteString(stepVars)
+
+	// Get the target vars
+	targetVars, err := getTargetSensitiveValues(ctx, db, masterKey)
+
+	if err != nil {
+		return "", err
+	}
+
+	sensitiveValues.WriteString(targetVars)
+
 	return sensitiveValues.String(), err
 }
 
@@ -238,6 +301,34 @@ func getAccountCreds(ctx context.Context, db *sql.DB, masterKey string) (string,
 	}
 
 	return builder.String(), nil
+}
+
+func getTenantVarSensitiveValues(ctx context.Context, db *sql.DB, masterKey string) (string, error) {
+	return "", nil
+}
+
+func getCertificateSensitiveValues(ctx context.Context, db *sql.DB, masterKey string) (string, error) {
+	return "", nil
+}
+
+func geFeedSensitiveValues(ctx context.Context, db *sql.DB, masterKey string) (string, error) {
+	return "", nil
+}
+
+func getGitCredsSensitiveValues(ctx context.Context, db *sql.DB, masterKey string) (string, error) {
+	return "", nil
+}
+
+func getStepTemplateSensitiveValues(ctx context.Context, db *sql.DB, masterKey string) (string, error) {
+	return "", nil
+}
+
+func getStepsSensitiveValues(ctx context.Context, db *sql.DB, masterKey string) (string, error) {
+	return "", nil
+}
+
+func getTargetSensitiveValues(ctx context.Context, db *sql.DB, masterKey string) (string, error) {
+	return "", nil
 }
 
 func writeVariableFile(variableName string, variableValue string) (string, error) {
