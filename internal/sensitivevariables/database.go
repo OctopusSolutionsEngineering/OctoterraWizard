@@ -67,10 +67,11 @@ func PingDatabase(ctx context.Context, db *sql.DB) error {
 func getVariableSetSecrets(ctx context.Context, db *sql.DB, masterKey string) (string, error) {
 	var id string
 	var jsonValue string
+	var isFrozen bool
 
 	timeout, cancel := context.WithTimeout(ctx, 60*time.Second)
 	defer cancel()
-	rows, err := db.QueryContext(timeout, "SELECT id, json FROM VariableSet")
+	rows, err := db.QueryContext(timeout, "SELECT Id, JSON, IsFrozen FROM VariableSet")
 	if err != nil {
 		return "", err
 	}
@@ -84,8 +85,12 @@ func getVariableSetSecrets(ctx context.Context, db *sql.DB, masterKey string) (s
 	var builder strings.Builder
 
 	for rows.Next() {
-		if err = rows.Scan(&id, &jsonValue); err != nil {
+		if err = rows.Scan(&id, &jsonValue, &isFrozen); err != nil {
 			return "", err
+		}
+
+		if isFrozen {
+			continue
 		}
 
 		var result map[string]interface{}
@@ -107,13 +112,6 @@ func getVariableSetSecrets(ctx context.Context, db *sql.DB, masterKey string) (s
 					// only include sensitive variables
 					if fmt.Sprint(variableMap["Type"]) != "Sensitive" {
 						continue
-					}
-
-					// only include the latest values (i.e. not those in a release)
-					if isFrozen, ok := variableMap["IsFrozen"].(bool); ok {
-						if isFrozen {
-							continue
-						}
 					}
 
 					variableName := naming.VariableSecretName(fmt.Sprint(variableMap["Id"]))
