@@ -51,14 +51,8 @@ func CreateSecretsLibraryVariableSet(values string, state state.State) error {
 		}
 	}
 
-	variableSet, err := variables.GetVariableSet(myclient, myclient.GetSpaceID(), lvs.VariableSetID)
-
-	if err != nil {
-		return errors.Join(errors.New("failed to get variable set"), err)
-	}
-
 	// Delete any existing variable with the same name
-	existingVariables, err := variables.GetAll(myclient, myclient.GetSpaceID(), variableSet.ID)
+	existingVariables, err := variables.GetAll(myclient, myclient.GetSpaceID(), lvs.ID)
 
 	if err != nil {
 		return errors.Join(errors.New("failed to get variables"), err)
@@ -66,7 +60,7 @@ func CreateSecretsLibraryVariableSet(values string, state state.State) error {
 
 	for _, variable := range existingVariables.Variables {
 		if variable.Name == SecretsVariableName {
-			_, err = variables.DeleteSingle(myclient, myclient.GetSpaceID(), variableSet.ID, variable.ID)
+			_, err = variables.DeleteSingle(myclient, myclient.GetSpaceID(), lvs.ID, variable.ID)
 
 			if err != nil {
 				return errors.Join(errors.New("failed to delete variable"), err)
@@ -80,7 +74,7 @@ func CreateSecretsLibraryVariableSet(values string, state state.State) error {
 	variable.Type = "Sensitive"
 	variable.Value = &values
 
-	_, err = variables.AddSingle(myclient, myclient.GetSpaceID(), variableSet.ID, variable)
+	_, err = variables.AddSingle(myclient, myclient.GetSpaceID(), lvs.ID, variable)
 
 	if err != nil {
 		return errors.Join(errors.New("failed to add variable"), err)

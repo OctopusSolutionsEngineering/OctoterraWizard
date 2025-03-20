@@ -143,6 +143,7 @@ func (s ExtractSecrets) GetContainer(parent fyne.Window) *fyne.Container {
 		s.dbServer.Disable()
 		s.password.Disable()
 		s.username.Disable()
+		s.database.Disable()
 		s.port.Disable()
 		s.masterKey.Disable()
 		s.extractVariables.Disable()
@@ -151,7 +152,14 @@ func (s ExtractSecrets) GetContainer(parent fyne.Window) *fyne.Container {
 
 		go func() {
 			defer previous.Enable()
-			next.Enable()
+			defer next.Enable()
+			defer s.dbServer.Enable()
+			defer s.password.Enable()
+			defer s.username.Enable()
+			defer s.database.Enable()
+			defer s.port.Enable()
+			defer s.masterKey.Enable()
+			defer s.extractVariables.Enable()
 			defer infinite.Hide()
 			if err := s.Execute(); err != nil {
 				if err := logutil.WriteTextToFile("extract_secrets_error.txt", err.Error()); err != nil {
