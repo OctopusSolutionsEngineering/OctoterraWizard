@@ -65,7 +65,7 @@ func (s ExtractSecrets) GetContainer(parent fyne.Window) *fyne.Container {
 		if !s.extractDone {
 			dialog.NewConfirm(
 				"Do you want to skip this step?",
-				"If you have run this step previously you can skip this step", nexCallback, s.Wizard.Window).Show()
+				"If you have run this step previously you can skip this step.", nexCallback, s.Wizard.Window).Show()
 		} else {
 			nexCallback(true)
 		}

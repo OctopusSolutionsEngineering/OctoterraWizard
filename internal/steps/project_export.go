@@ -173,11 +173,6 @@ func (s ProjectExportStep) Execute(prompt func(string, string, func(bool)), hand
 		return
 	}
 
-	if !varsLvsExists {
-		handleError("🔴 The library variable set "+sensitivevariables.SecretsLibraryVariableSetName+" could not be found", errors.New("resource not found"))
-		return
-	}
-
 	// First look deletes any existing projects
 	for _, project := range allProjects {
 		if project.Name == spaceManagementProject {
@@ -340,7 +335,12 @@ func (s ProjectExportStep) Execute(prompt func(string, string, func(bool)), hand
 			return
 		}
 
-		projectResource.IncludedLibraryVariableSets = append(projectResource.IncludedLibraryVariableSets, lvs.ID, varsLvs.ID)
+		projectResource.IncludedLibraryVariableSets = append(projectResource.IncludedLibraryVariableSets, lvs.ID)
+
+		// The secrets library variable set is optional
+		if varsLvsExists {
+			projectResource.IncludedLibraryVariableSets = append(projectResource.IncludedLibraryVariableSets, varsLvs.ID)
+		}
 
 		_, err = projects.Update(myclient, projectResource)
 
