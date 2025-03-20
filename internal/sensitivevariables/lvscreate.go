@@ -77,6 +77,7 @@ func CreateSecretsLibraryVariableSet(values string, state state.State) error {
 	// Create a new variable
 	variable := variables.NewVariable(SecretsVariableName)
 	variable.IsSensitive = true
+	variable.Type = "Sensitive"
 	variable.Value = &values
 
 	_, err = variables.AddSingle(myclient, myclient.GetSpaceID(), variableSet.ID, variable)
