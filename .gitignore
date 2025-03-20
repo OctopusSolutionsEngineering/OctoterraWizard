@@ -63,3 +63,5 @@ override.tf.json
 terraform.rc
 
 *_error.txt
+
+**/.terraform.lock.hcl
