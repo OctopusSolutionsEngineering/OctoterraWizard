@@ -568,12 +568,12 @@ func getStepsSensitiveValues(ctx context.Context, db *sql.DB, masterKey string) 
 }
 
 func getTargetSensitiveValues(ctx context.Context, db *sql.DB, masterKey string) (string, error) {
-	var id string
+	var name string
 	var jsonValue string
 
 	timeout, cancel := context.WithTimeout(ctx, 60*time.Second)
 	defer cancel()
-	rows, err := db.QueryContext(timeout, "SELECT Id, JSON FROM Machine")
+	rows, err := db.QueryContext(timeout, "SELECT Name, JSON FROM Machine")
 	if err != nil {
 		return "", err
 	}
@@ -587,7 +587,7 @@ func getTargetSensitiveValues(ctx context.Context, db *sql.DB, masterKey string)
 	var builder strings.Builder
 
 	for rows.Next() {
-		if err = rows.Scan(&id, &jsonValue); err != nil {
+		if err = rows.Scan(&name, &jsonValue); err != nil {
 			return "", err
 		}
 
@@ -598,7 +598,7 @@ func getTargetSensitiveValues(ctx context.Context, db *sql.DB, masterKey string)
 		}
 
 		// Note that as at 0.40.4 the TF provider does not expose the password for an offline target
-		gitCredName := naming.MachineSecretName(id)
+		gitCredName := naming.MachineSecretName(name)
 
 		endpoint, endpointOk := result["Endpoint"].(map[string]interface{})
 

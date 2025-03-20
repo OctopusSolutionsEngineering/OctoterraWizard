@@ -37,8 +37,8 @@ func GitCredentialSecretName(id string) string {
 	return "gitcredential_" + hash.Sha256Hash(id) + "_sensitive_value"
 }
 
-func MachineSecretName(id string) string {
-	return "machine_" + hash.Sha256Hash(id) + "_sensitive_value"
+func MachineSecretName(name string) string {
+	return "machine_" + sanitizeName(name) + "_sensitive_value"
 }
 
 func CertificateDataName(name string) string {
