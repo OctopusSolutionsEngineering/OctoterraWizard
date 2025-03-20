@@ -82,7 +82,7 @@ func GetStepTemplateId(myclient *client.Client, state state.State, name string) 
 }
 
 func LibraryVariableSetExists(myclient *client.Client, name string) (bool, *variables.LibraryVariableSet, error) {
-	if resource, err := myclient.LibraryVariableSets.GetByPartialName("Octoterra"); err == nil {
+	if resource, err := myclient.LibraryVariableSets.GetByPartialName(name); err == nil {
 		exatchMatch := lo.Filter(resource, func(item *variables.LibraryVariableSet, index int) bool {
 			return item.Name == name
 		})

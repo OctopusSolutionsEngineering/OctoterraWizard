@@ -219,7 +219,7 @@ resource "octopusdeploy_runbook_process" "runbook" {
         "SerializeProject.Exported.Space.Id" = "#{Octopus.Space.Id}"
         "SerializeProject.Exported.Project.IgnoreVariableChanges" = "False"
         "SerializeProject.Exported.Project.IgnoreCacValues" = "False"
-        "Exported.Project.IgnoredLibraryVariableSet" = "Octoterra,OctoterraWizSecrets"
+        "Exported.Project.IgnoredLibraryVariableSet" = "Octoterra,SpaceSensitiveVars"
         "SerializeProject.Exported.Project.IgnoreAllChanges" = "False"
         "SerializeProject.Project.Space.DefaultSecrets" = var.default_secret_variables
         "SerializeProject.ThisInstance.Api.Key" = "#{Octopus.Source.ApiKey}"

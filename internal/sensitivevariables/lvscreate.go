@@ -9,7 +9,7 @@ import (
 	"github.com/samber/lo"
 )
 
-const SecretsLibraryVariableSetName = "OctoterraWizSecrets"
+const SecretsLibraryVariableSetName = "SpaceSensitiveVars"
 const SecretsVariableName = "OctoterraWiz.Terraform.Vars"
 
 // CreateSecretsLibraryVariableSet will create or reuse a library variable set called OctoterraWizSecrets

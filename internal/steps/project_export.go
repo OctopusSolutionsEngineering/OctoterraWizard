@@ -304,7 +304,7 @@ func (s ProjectExportStep) Execute(prompt func(string, string, func(bool)), hand
 			"-var=octopus_server_external="+s.State.GetExternalServer(),
 			"-var=terraform_backend="+s.State.BackendType,
 			"-var=use_container_images="+fmt.Sprint(s.State.UseContainerImages),
-			"-var=default_secret_variables="+fmt.Sprint(s.State.EnableVariableSpreading),
+			"-var=default_secret_variables=false",
 			"-var=octopus_server="+s.State.Server,
 			"-var=octopus_apikey="+s.State.ApiKey,
 			"-var=octopus_space_id="+s.State.Space,
