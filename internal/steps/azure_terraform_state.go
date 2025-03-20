@@ -240,5 +240,11 @@ func (s AzureTerraformStateStep) getState() state.State {
 		AzureTenantId:             strings.TrimSpace(s.tenantId.Text),
 		AzureApplicationId:        strings.TrimSpace(s.applicationId.Text),
 		AzurePassword:             strings.TrimSpace(s.password.Text),
+		DatabaseServer:            s.State.DatabaseServer,
+		DatabaseUser:              s.State.DatabaseUser,
+		DatabasePass:              s.State.DatabasePass,
+		DatabasePort:              s.State.DatabasePort,
+		DatabaseName:              s.State.DatabaseName,
+		DatabaseMasterKey:         s.State.DatabaseMasterKey,
 	}
 }

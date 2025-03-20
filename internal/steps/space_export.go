@@ -197,7 +197,7 @@ func (s SpaceExportStep) Execute(prompt func(string, string, func(bool)), handle
 		}
 	}
 
-	lvsExists, lvs, err := query.LibraryVariableSetExists(myclient)
+	lvsExists, lvs, err := query.LibraryVariableSetExists(myclient, "Octoterra")
 
 	if lvsExists && !attemptedLvsDelete {
 		deleteLvsFunc := func(b bool) {
@@ -430,7 +430,7 @@ func (s SpaceExportStep) Execute(prompt func(string, string, func(bool)), handle
 		"-var=octopus_deploys3_actiontemplateid="+deploySpaceTemplateS3,
 		"-var=octopus_deployazure_actiontemplateid="+deploySpaceTemplateAzureStorage,
 		"-var=terraform_backend="+s.State.BackendType,
-		"-var=default_secret_variables="+fmt.Sprint(s.State.EnableVariableSpreading),
+		"-var=default_secret_variables=false",
 		"-var=use_container_images="+fmt.Sprint(s.State.UseContainerImages),
 		"-var=octopus_server_external="+s.State.GetExternalServer(),
 		"-var=octopus_server="+s.State.Server,
