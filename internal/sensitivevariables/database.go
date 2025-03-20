@@ -52,10 +52,27 @@ func ExtractVariables(server string, port string, database string, username stri
 		return "", err
 	}
 
+	var sensitiveValues strings.Builder
+
 	// Get the sensitive variables
 	sensitiveVars, err := getVariableSetSecrets(ctx, db, masterKey)
 
-	return sensitiveVars, err
+	if err != nil {
+		return "", err
+	}
+
+	sensitiveValues.WriteString(sensitiveVars)
+
+	// Get the account passwords
+	accountCreds, err := getAccountCreds(ctx, db, masterKey)
+
+	if err != nil {
+		return "", err
+	}
+
+	sensitiveValues.WriteString(accountCreds)
+
+	return sensitiveValues.String(), err
 }
 
 func PingDatabase(ctx context.Context, db *sql.DB) error {
@@ -141,4 +158,101 @@ func getVariableSetSecrets(ctx context.Context, db *sql.DB, masterKey string) (s
 	}
 
 	return builder.String(), nil
+}
+
+func getAccountCreds(ctx context.Context, db *sql.DB, masterKey string) (string, error) {
+	var name string
+	var jsonValue string
+
+	timeout, cancel := context.WithTimeout(ctx, 60*time.Second)
+	defer cancel()
+	rows, err := db.QueryContext(timeout, "SELECT Name, JSON FROM Account")
+	if err != nil {
+		return "", err
+	}
+
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Println(err.Error())
+		}
+	}()
+
+	var builder strings.Builder
+
+	for rows.Next() {
+		if err = rows.Scan(&name, &jsonValue); err != nil {
+			return "", err
+		}
+
+		var result map[string]interface{}
+
+		if err := json.Unmarshal([]byte(jsonValue), &result); err != nil {
+			return "", err
+		}
+
+		// Each account type stores different secrets
+		password, passwordOk := result["Password"].(string)
+		secretKey, secretKeyOk := result["SecretKey"].(string)
+		jsonKey, jsonKeyOk := result["JsonKey"].(string)
+		privateKeyPassphrase, privateKeyPassphraseOk := result["PrivateKeyPassphrase"].(string)
+		privateKeyFile, privateKeyFileOk := result["PrivateKeyFile"].(string)
+		token, tokenOk := result["Token"].(string)
+
+		// Must have one sensitive value to extract
+		if !(passwordOk || secretKeyOk || jsonKeyOk || privateKeyPassphraseOk || privateKeyFileOk || tokenOk) {
+			continue
+		}
+
+		variableName := naming.AccountSecretName(fmt.Sprint(result["Name"]))
+		variableNameCert := naming.AccountCertName(fmt.Sprint(result["Name"]))
+
+		var variableValue string
+		var variableValueCert string
+
+		if passwordOk {
+			variableValue, err = DecryptSensitiveVariable(masterKey, fmt.Sprint(password))
+		} else if secretKeyOk {
+			variableValue, err = DecryptSensitiveVariable(masterKey, fmt.Sprint(secretKey))
+		} else if jsonKeyOk {
+			variableValue, err = DecryptSensitiveVariable(masterKey, fmt.Sprint(jsonKey))
+		} else if privateKeyPassphraseOk && privateKeyFileOk {
+			variableValue, err = DecryptSensitiveVariable(masterKey, fmt.Sprint(privateKeyPassphrase))
+			variableValueCert, err = DecryptSensitiveVariable(masterKey, fmt.Sprint(privateKeyFile))
+		} else if tokenOk {
+			variableValue, err = DecryptSensitiveVariable(masterKey, fmt.Sprint(token))
+		}
+
+		if err != nil {
+			return "", err
+		}
+
+		if tfVar, err := writeVariableFile(variableName, variableValue); err != nil {
+			return "", err
+		} else {
+			builder.WriteString(tfVar)
+		}
+
+		if tfVar, err := writeVariableFile(variableNameCert, variableValueCert); err != nil {
+			return "", err
+		} else {
+			builder.WriteString(tfVar)
+		}
+
+	}
+
+	return builder.String(), nil
+}
+
+func writeVariableFile(variableName string, variableValue string) (string, error) {
+	if variableValue == "" {
+		return "", nil
+	}
+
+	escapedValue, err := json.Marshal(variableValue)
+
+	if err != nil {
+		return "", err
+	}
+
+	return variableName + " = " + string(escapedValue) + "\n", nil
 }
