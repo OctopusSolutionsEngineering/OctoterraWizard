@@ -68,10 +68,11 @@ func getVariableSetSecrets(ctx context.Context, db *sql.DB, masterKey string) (s
 	var id string
 	var jsonValue string
 	var isFrozen bool
+	var ownerType string
 
 	timeout, cancel := context.WithTimeout(ctx, 60*time.Second)
 	defer cancel()
-	rows, err := db.QueryContext(timeout, "SELECT Id, JSON, IsFrozen FROM VariableSet")
+	rows, err := db.QueryContext(timeout, "SELECT Id, JSON, IsFrozen, OwnerType FROM VariableSet")
 	if err != nil {
 		return "", err
 	}
@@ -85,11 +86,15 @@ func getVariableSetSecrets(ctx context.Context, db *sql.DB, masterKey string) (s
 	var builder strings.Builder
 
 	for rows.Next() {
-		if err = rows.Scan(&id, &jsonValue, &isFrozen); err != nil {
+		if err = rows.Scan(&id, &jsonValue, &isFrozen, &ownerType); err != nil {
 			return "", err
 		}
 
 		if isFrozen {
+			continue
+		}
+
+		if ownerType != "Project" && ownerType != "LibraryVariableSet" {
 			continue
 		}
 
