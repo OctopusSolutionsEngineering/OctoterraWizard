@@ -20,16 +20,18 @@ import (
 // ExtractSecrets provides a step in the wizard to extract secrets from the Octopus database
 type ExtractSecrets struct {
 	BaseStep
-	Wizard    wizard.Wizard
-	dbServer  *widget.Entry
-	port      *widget.Entry
-	database  *widget.Entry
-	username  *widget.Entry
-	password  *widget.Entry
-	masterKey *widget.Entry
-	result    *widget.Label
-	next      *widget.Button
-	previous  *widget.Button
+	Wizard           wizard.Wizard
+	dbServer         *widget.Entry
+	port             *widget.Entry
+	database         *widget.Entry
+	username         *widget.Entry
+	password         *widget.Entry
+	masterKey        *widget.Entry
+	result           *widget.Label
+	next             *widget.Button
+	previous         *widget.Button
+	extractVariables *widget.Button
+	extractDone      bool
 }
 
 func (s ExtractSecrets) GetContainer(parent fyne.Window) *fyne.Container {
@@ -53,39 +55,6 @@ func (s ExtractSecrets) GetContainer(parent fyne.Window) *fyne.Container {
 		defer s.next.Enable()
 		defer s.previous.Enable()
 
-		validationFailed := false
-		if err := validators.ValidateDatabase(s.getState()); err != nil {
-			if err := logutil.WriteTextToFile("extract_secrets_error.txt", err.Error()); err != nil {
-				fmt.Println("Failed to write error to file")
-			}
-
-			s.result.SetText("🔴 Unable to contact the database. Check the server, port, database, username, and password.")
-			validationFailed = true
-		}
-
-		if !validationFailed {
-			newState := s.getState()
-			variableValue, err := sensitivevariables.ExtractVariables(newState.DatabaseServer, newState.DatabasePort, newState.DatabaseName, newState.DatabaseUser, newState.DatabasePass, newState.DatabaseMasterKey)
-
-			if err != nil {
-				if err := logutil.WriteTextToFile("extract_secrets_error.txt", err.Error()); err != nil {
-					fmt.Println("Failed to write error to file")
-				}
-
-				s.result.SetText("🔴 Unable to extract the sensitive values. Check the server, port, database, username, password, and master key.")
-				validationFailed = true
-			} else {
-				if err := sensitivevariables.CreateSecretsLibraryVariableSet(variableValue, newState); err != nil {
-					if err := logutil.WriteTextToFile("extract_secrets_error.txt", err.Error()); err != nil {
-						fmt.Println("Failed to write error to file")
-					}
-
-					s.result.SetText("🔴 Unable to create the library variable set or the variable it contains.")
-					validationFailed = true
-				}
-			}
-		}
-
 		nexCallback := func(proceed bool) {
 			if proceed {
 				s.Wizard.ShowWizardStep(StepTemplateStep{
@@ -94,8 +63,10 @@ func (s ExtractSecrets) GetContainer(parent fyne.Window) *fyne.Container {
 			}
 		}
 
-		if validationFailed {
-			dialog.NewConfirm("Variable extraction failed", "Failed to extract the sensitive values. Do you wish to continue anyway?", nexCallback, s.Wizard.Window).Show()
+		if !s.extractDone {
+			dialog.NewConfirm(
+				"Do you want to skip this step?",
+				"If you have run this step previously you can skip this step", nexCallback, s.Wizard.Window).Show()
 		} else {
 			nexCallback(true)
 		}
@@ -122,6 +93,10 @@ func (s ExtractSecrets) GetContainer(parent fyne.Window) *fyne.Container {
 		The master key is used to decrypt the sensitive values stored in the database.`))
 	linkUrl, _ := url.Parse("https://octopus.com/docs/security/data-encryption")
 	link := widget.NewHyperlink("Learn about the master key.", linkUrl)
+
+	infinite := widget.NewProgressBarInfinite()
+	infinite.Start()
+	infinite.Hide()
 
 	serverLabel := widget.NewLabel("Octopus Database Server")
 	s.dbServer = widget.NewEntry()
@@ -162,7 +137,38 @@ func (s ExtractSecrets) GetContainer(parent fyne.Window) *fyne.Container {
 	s.password.OnChanged = validation
 	s.masterKey.OnChanged = validation
 
-	formLayout := container.New(layout.NewFormLayout(), serverLabel, s.dbServer, portLabel, s.port, databaseLabel, s.database, usernameLabel, s.username, passwordLabel, s.password, masterKeyPassword, s.masterKey)
+	result := widget.NewLabel("")
+
+	s.extractVariables = widget.NewButton("Extract sensitive values", func() {
+		next.Disable()
+		previous.Disable()
+		infinite.Show()
+		s.dbServer.Disable()
+		s.password.Disable()
+		s.username.Disable()
+		s.port.Disable()
+		s.masterKey.Disable()
+		s.extractVariables.Disable()
+		result.SetText("🔵 Spreading sensitive variables. This can take a little while.")
+		s.extractDone = true
+
+		go func() {
+			defer previous.Enable()
+			next.Enable()
+			defer infinite.Hide()
+			if err := s.Execute(); err != nil {
+				if err := logutil.WriteTextToFile("extract_secrets_error.txt", err.Error()); err != nil {
+					fmt.Println("Failed to write error to file")
+				}
+
+				result.SetText("🔴 An error was raised while attempting to extract the sensitive values." + err.Error())
+			} else {
+				result.SetText("🟢 Sensitive values have been extracted.")
+			}
+		}()
+	})
+
+	formLayout := container.New(layout.NewFormLayout(), serverLabel, s.dbServer, portLabel, s.port, databaseLabel, s.database, usernameLabel, s.username, passwordLabel, s.password, masterKeyPassword, s.masterKey, s.extractVariables, infinite, result)
 
 	middle := container.New(layout.NewVBoxLayout(), heading, introText, link, formLayout, s.result)
 
@@ -209,5 +215,32 @@ func (s ExtractSecrets) getState() state.State {
 // SaveSecretsVariable creates a library variable set with a secret value containing the contents
 // of a terraform.tfvars file that populates the secrets used by the exported space
 func (s *ExtractSecrets) SaveSecretsVariable() error {
+	return nil
+}
+
+func (s ExtractSecrets) Execute() error {
+	if err := validators.ValidateDatabase(s.getState()); err != nil {
+		if err := logutil.WriteTextToFile("extract_secrets_error.txt", err.Error()); err != nil {
+			return err
+		}
+	}
+
+	newState := s.getState()
+	variableValue, err := sensitivevariables.ExtractVariables(newState.DatabaseServer, newState.DatabasePort, newState.DatabaseName, newState.DatabaseUser, newState.DatabasePass, newState.DatabaseMasterKey)
+
+	if err != nil {
+		if err := logutil.WriteTextToFile("extract_secrets_error.txt", err.Error()); err != nil {
+			fmt.Println("Failed to write error to file")
+		}
+		return err
+	} else {
+		if err := sensitivevariables.CreateSecretsLibraryVariableSet(variableValue, newState); err != nil {
+			if err := logutil.WriteTextToFile("extract_secrets_error.txt", err.Error()); err != nil {
+				fmt.Println("Failed to write error to file")
+			}
+
+			return err
+		}
+	}
 	return nil
 }
