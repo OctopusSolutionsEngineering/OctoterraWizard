@@ -305,7 +305,62 @@ func getAccountCreds(ctx context.Context, db *sql.DB, masterKey string) (string,
 }
 
 func getTenantVarSensitiveValues(ctx context.Context, db *sql.DB, masterKey string) (string, error) {
-	return "", nil
+	var id string
+	var jsonValue string
+
+	timeout, cancel := context.WithTimeout(ctx, 60*time.Second)
+	defer cancel()
+	rows, err := db.QueryContext(timeout, "SELECT Id, JSON FROM TenantVariable")
+	if err != nil {
+		return "", err
+	}
+
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Println(err.Error())
+		}
+	}()
+
+	var builder strings.Builder
+
+	for rows.Next() {
+		if err = rows.Scan(&id, &jsonValue); err != nil {
+			return "", err
+		}
+
+		var result map[string]interface{}
+
+		if err := json.Unmarshal([]byte(jsonValue), &result); err != nil {
+			return "", err
+		}
+
+		tentacleVariableName := naming.TenantVariableSecretName(id)
+
+		value, valueOk := result["Value"].(map[string]interface{})
+
+		if !valueOk {
+			return "", errors.New("Value is not a map")
+		}
+
+		sensitiveValue, sensitiveValueOk := value["SensitiveValue"].(string)
+
+		if sensitiveValueOk {
+			decryptedSensitiveValue, err := DecryptSensitiveVariable(masterKey, fmt.Sprint(sensitiveValue))
+
+			if err != nil {
+				return "", err
+			}
+
+			if tfVar, err := writeVariableFile(tentacleVariableName, decryptedSensitiveValue); err != nil {
+				return "", err
+			} else {
+				builder.WriteString(tfVar)
+			}
+		}
+
+	}
+
+	return builder.String(), nil
 }
 
 func getCertificateSensitiveValues(ctx context.Context, db *sql.DB, masterKey string) (string, error) {
