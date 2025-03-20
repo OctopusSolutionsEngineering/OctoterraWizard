@@ -149,5 +149,11 @@ func (s OctopusDestinationDetails) getState() state.State {
 		AzureTenantId:             s.State.AzureTenantId,
 		AzureApplicationId:        s.State.AzureApplicationId,
 		AzurePassword:             s.State.AzurePassword,
+		DatabaseServer:            s.State.DatabaseServer,
+		DatabaseUser:              s.State.DatabaseUser,
+		DatabasePass:              s.State.DatabasePass,
+		DatabasePort:              s.State.DatabasePort,
+		DatabaseName:              s.State.DatabaseName,
+		DatabaseMasterKey:         s.State.DatabaseMasterKey,
 	}
 }

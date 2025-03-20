@@ -25,6 +25,13 @@ type State struct {
 	AzurePassword                 string
 	ExcludeAllLibraryVariableSets bool
 	EnableVariableSpreading       bool
+
+	DatabaseServer    string
+	DatabaseUser      string
+	DatabasePass      string
+	DatabasePort      string
+	DatabaseName      string
+	DatabaseMasterKey string
 }
 
 func (s State) GetExternalServer() string {

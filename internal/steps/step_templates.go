@@ -25,7 +25,7 @@ type StepTemplateStep struct {
 func (s StepTemplateStep) GetContainer(parent fyne.Window) *fyne.Container {
 
 	bottom, previous, next := s.BuildNavigation(func() {
-		s.Wizard.ShowWizardStep(EnableVariableSpreading{
+		s.Wizard.ShowWizardStep(ExtractSecrets{
 			Wizard:   s.Wizard,
 			BaseStep: BaseStep{State: s.State}})
 	}, func() {
