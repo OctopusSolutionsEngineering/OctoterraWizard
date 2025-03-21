@@ -35,6 +35,12 @@ The default values used by the wizard are defined in environment variables:
 * `AZURE_CLIENT_ID`: [Azure environment variable](https://azure.github.io/static-web-apps-cli/docs/cli/env-vars/)
 * `AZURE_CLIENT_SECRET`: [Azure environment variable](https://azure.github.io/static-web-apps-cli/docs/cli/env-vars/)
 * `OCTOTERRAWIZ_EXCLUDE_ALL_LIBRARY_VARIABLE_SETS`: If set to `true`, the tool will exclude all library variable sets from the export
+* `OCTOTERRAWIZ_DATABASE_SERVER` - The Octopus database server hostname or IP
+* `OCTOTERRAWIZ_DATABASE_USER` - The database username
+* `OCTOTERRAWIZ_DATABASE_PASS` - The database password
+* `OCTOTERRAWIZ_DATABASE_PORT` - The database port
+* `OCTOTERRAWIZ_DATABASE_NAME` - The database name
+* `OCTOTERRAWIZ_DATABASE_MASTERKEY` - The octopus master key
 
 ## Screenshot
 
