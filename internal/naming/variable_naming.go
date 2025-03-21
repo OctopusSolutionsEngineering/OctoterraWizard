@@ -57,6 +57,10 @@ func FeedSecretKeyName(name string) string {
 	return "feed_" + sanitizeName(name) + "_secretkey"
 }
 
+func StepPropertySecretName(parent string, action string, property string) string {
+	return sanitizeName(parent + "_" + action + "_" + property)
+}
+
 // sanitizeName creates a string that can be used as a name for HCL resources
 // From the Terraform docs:
 // A name must start with a letter or underscore and may contain only letters, digits, underscores, and dashes.
