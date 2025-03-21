@@ -560,7 +560,76 @@ func getGitCredsSensitiveValues(ctx context.Context, db *sql.DB, masterKey strin
 }
 
 func getStepTemplateSensitiveValues(ctx context.Context, db *sql.DB, masterKey string) (string, error) {
-	return "", nil
+	var jsonValue string
+
+	timeout, cancel := context.WithTimeout(ctx, 60*time.Second)
+	defer cancel()
+	rows, err := db.QueryContext(timeout, "SELECT JSON FROM ActionTemplate")
+	if err != nil {
+		return "", err
+	}
+
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Println(err.Error())
+		}
+	}()
+
+	var builder strings.Builder
+
+	for rows.Next() {
+		if err = rows.Scan(&jsonValue); err != nil {
+			return "", err
+		}
+
+		var result map[string]interface{}
+
+		if err := json.Unmarshal([]byte(jsonValue), &result); err != nil {
+			return "", err
+		}
+
+		// Steps is an array of objects
+		if parameters, ok := result["Parameters"].([]interface{}); ok {
+			// process each parameter
+			for _, parameter := range parameters {
+				// convert each parameter to a map
+				if parametersMap, ok := parameter.(map[string]interface{}); ok {
+					// get the default value
+					if defaultValue, ok := parametersMap["DefaultValue"]; ok {
+						if defaultValueMap, ok := defaultValue.(map[string]interface{}); ok {
+							// get the sensitive value
+							if sensitiveValue, ok := defaultValueMap["SensitiveValue"]; ok {
+								// At this point we have drilled down into a sensitive value defined in an action property bag
+								if sensitiveValueValue, ok := sensitiveValue.(string); ok {
+									// Out of an abundance of caution, make sure the Id property is a string
+									if templateId, ok := result["ImmutableId"].(string); ok {
+										// Out of an abundance of caution, make sure the parameters has an ID
+										if parameterId, ok := parametersMap["Id"].(string); ok {
+											// We can now decrypt the sensitive value
+											variableName := naming.StepTemplateParameterSecretName(templateId, parameterId)
+											variableValue, err := DecryptSensitiveVariable(masterKey, sensitiveValueValue)
+
+											if err != nil {
+												return "", err
+											}
+
+											if tfVar, err := writeVariableFile(variableName, variableValue); err != nil {
+												return "", err
+											} else {
+												builder.WriteString(tfVar)
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return builder.String(), nil
 }
 
 func getStepsSensitiveValues(ctx context.Context, db *sql.DB, masterKey string) (string, error) {
@@ -642,7 +711,6 @@ func getStepsSensitiveValues(ctx context.Context, db *sql.DB, masterKey string) 
 				}
 			}
 		}
-
 	}
 
 	return builder.String(), nil
