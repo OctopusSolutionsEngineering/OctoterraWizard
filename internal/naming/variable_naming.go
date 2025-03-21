@@ -57,8 +57,8 @@ func FeedSecretKeyName(name string) string {
 	return "feed_" + sanitizeName(name) + "_secretkey"
 }
 
-func StepPropertySecretName(parent string, action string, property string) string {
-	return sanitizeName(parent + "_" + action + "_" + property)
+func StepPropertySecretName(parentId string, actionId string, property string) string {
+	return "action_" + hash.Sha256Hash(parentId+"_"+actionId+"_"+property) + "_sensitive_value"
 }
 
 // sanitizeName creates a string that can be used as a name for HCL resources

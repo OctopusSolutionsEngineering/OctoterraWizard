@@ -564,7 +564,88 @@ func getStepTemplateSensitiveValues(ctx context.Context, db *sql.DB, masterKey s
 }
 
 func getStepsSensitiveValues(ctx context.Context, db *sql.DB, masterKey string) (string, error) {
-	return "", nil
+	var id string
+	var jsonValue string
+
+	timeout, cancel := context.WithTimeout(ctx, 60*time.Second)
+	defer cancel()
+	rows, err := db.QueryContext(timeout, "SELECT OwnerId, JSON FROM DeploymentProcess")
+	if err != nil {
+		return "", err
+	}
+
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Println(err.Error())
+		}
+	}()
+
+	var builder strings.Builder
+
+	for rows.Next() {
+		if err = rows.Scan(&id, &jsonValue); err != nil {
+			return "", err
+		}
+
+		var result map[string]interface{}
+
+		if err := json.Unmarshal([]byte(jsonValue), &result); err != nil {
+			return "", err
+		}
+
+		// Steps is an array of objects
+		if steps, ok := result["Steps"].([]interface{}); ok {
+			// process each step
+			for _, step := range steps {
+				// convert each step to a map
+				if stepMap, ok := step.(map[string]interface{}); ok {
+					// get the step actions
+					if actions, ok := stepMap["Actions"].([]interface{}); ok {
+						// loop over each action
+						for _, action := range actions {
+							// convert each action to a map
+							if actionMap, ok := action.(map[string]interface{}); ok {
+								// get the properties as a map
+								if propertiesMap, ok := actionMap["Properties"].(map[string]interface{}); ok {
+									// loop over each key value pair
+									for propertyName, propertyValue := range propertiesMap {
+										// Get properties that are map. These are secrets. Regular properties are just strings.
+										if propertyValueMap, ok := propertyValue.(map[string]interface{}); ok {
+											// get the sensitive value
+											if sensitiveValue, ok := propertyValueMap["SensitiveValue"]; ok {
+												// At this point we have drilled down into a sensitive value defined in an action property bag
+												if sensitiveValueValue, ok := sensitiveValue.(string); ok {
+													// Out of an abundance of caution, make sure the Id property is a string
+													if actionId, ok := actionMap["Id"].(string); ok {
+														// We can now decrypt the sensitive value
+														variableName := naming.StepPropertySecretName(id, actionId, propertyName)
+														variableValue, err := DecryptSensitiveVariable(masterKey, sensitiveValueValue)
+
+														if err != nil {
+															return "", err
+														}
+
+														if tfVar, err := writeVariableFile(variableName, variableValue); err != nil {
+															return "", err
+														} else {
+															builder.WriteString(tfVar)
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+	}
+
+	return builder.String(), nil
 }
 
 func getTargetSensitiveValues(ctx context.Context, db *sql.DB, masterKey string) (string, error) {
