@@ -589,42 +589,73 @@ func getStepTemplateSensitiveValues(ctx context.Context, db *sql.DB, masterKey s
 		}
 
 		// Steps is an array of objects
-		if parameters, ok := result["Parameters"].([]interface{}); ok {
-			// process each parameter
-			for _, parameter := range parameters {
-				// convert each parameter to a map
-				if parametersMap, ok := parameter.(map[string]interface{}); ok {
-					// get the default value
-					if defaultValue, ok := parametersMap["DefaultValue"]; ok {
-						if defaultValueMap, ok := defaultValue.(map[string]interface{}); ok {
-							// get the sensitive value
-							if sensitiveValue, ok := defaultValueMap["SensitiveValue"]; ok {
-								// At this point we have drilled down into a sensitive value defined in an action property bag
-								if sensitiveValueValue, ok := sensitiveValue.(string); ok {
-									// Out of an abundance of caution, make sure the Id property is a string
-									if templateId, ok := result["ImmutableId"].(string); ok {
-										// Out of an abundance of caution, make sure the parameters has an ID
-										if parameterId, ok := parametersMap["Id"].(string); ok {
-											// We can now decrypt the sensitive value
-											variableName := naming.StepTemplateParameterSecretName(templateId, parameterId)
-											variableValue, err := DecryptSensitiveVariable(masterKey, sensitiveValueValue)
+		parameters, parametersOk := result["Parameters"].([]interface{})
 
-											if err != nil {
-												return "", err
-											}
+		if !parametersOk {
+			continue
+		}
+		// process each parameter
+		for _, parameter := range parameters {
+			// convert each parameter to a map
+			parametersMap, parametersMapOk := parameter.(map[string]interface{})
 
-											if tfVar, err := writeVariableFile(variableName, variableValue); err != nil {
-												return "", err
-											} else {
-												builder.WriteString(tfVar)
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-				}
+			if !parametersMapOk {
+				continue
+			}
+
+			// get the default value
+			defaultValue, defaultValueOk := parametersMap["DefaultValue"]
+
+			if !defaultValueOk {
+				continue
+			}
+
+			defaultValueMap, defaultValueMapOk := defaultValue.(map[string]interface{})
+
+			if !defaultValueMapOk {
+				continue
+			}
+
+			// get the sensitive value
+			sensitiveValue, sensitiveValueOk := defaultValueMap["SensitiveValue"]
+
+			if !sensitiveValueOk {
+				continue
+			}
+
+			// At this point we have drilled down into a sensitive value defined in an action property bag
+			sensitiveValueValue, sensitiveValueValueOk := sensitiveValue.(string)
+
+			if !sensitiveValueValueOk {
+				continue
+			}
+
+			// Out of an abundance of caution, make sure the Id property is a string
+			templateId, templateIdOk := result["ImmutableId"].(string)
+
+			if !templateIdOk {
+				continue
+			}
+
+			// Out of an abundance of caution, make sure the parameters has an ID
+			parameterId, parameterIdOk := parametersMap["Id"].(string)
+
+			if !parameterIdOk {
+				continue
+			}
+
+			// We can now decrypt the sensitive value
+			variableName := naming.StepTemplateParameterSecretName(templateId, parameterId)
+			variableValue, err := DecryptSensitiveVariable(masterKey, sensitiveValueValue)
+
+			if err != nil {
+				return "", err
+			}
+
+			if tfVar, err := writeVariableFile(variableName, variableValue); err != nil {
+				return "", err
+			} else {
+				builder.WriteString(tfVar)
 			}
 		}
 	}
