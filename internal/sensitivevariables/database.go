@@ -663,50 +663,87 @@ func getStepsSensitiveValues(ctx context.Context, db *sql.DB, masterKey string) 
 		}
 
 		// Steps is an array of objects
-		if steps, ok := result["Steps"].([]interface{}); ok {
-			// process each step
-			for _, step := range steps {
-				// convert each step to a map
-				if stepMap, ok := step.(map[string]interface{}); ok {
-					// get the step actions
-					if actions, ok := stepMap["Actions"].([]interface{}); ok {
-						// loop over each action
-						for _, action := range actions {
-							// convert each action to a map
-							if actionMap, ok := action.(map[string]interface{}); ok {
-								// get the properties as a map
-								if propertiesMap, ok := actionMap["Properties"].(map[string]interface{}); ok {
-									// loop over each key value pair
-									for propertyName, propertyValue := range propertiesMap {
-										// Get properties that are map. These are secrets. Regular properties are just strings.
-										if propertyValueMap, ok := propertyValue.(map[string]interface{}); ok {
-											// get the sensitive value
-											if sensitiveValue, ok := propertyValueMap["SensitiveValue"]; ok {
-												// At this point we have drilled down into a sensitive value defined in an action property bag
-												if sensitiveValueValue, ok := sensitiveValue.(string); ok {
-													// Out of an abundance of caution, make sure the Id property is a string
-													if actionId, ok := actionMap["Id"].(string); ok {
-														// We can now decrypt the sensitive value
-														variableName := naming.StepPropertySecretName(id, actionId, propertyName)
-														variableValue, err := DecryptSensitiveVariable(masterKey, sensitiveValueValue)
+		steps, stepsOk := result["Steps"].([]interface{})
 
-														if err != nil {
-															return "", err
-														}
+		if !stepsOk {
+			continue
+		}
 
-														if tfVar, err := writeVariableFile(variableName, variableValue); err != nil {
-															return "", err
-														} else {
-															builder.WriteString(tfVar)
-														}
-													}
-												}
-											}
-										}
-									}
-								}
-							}
-						}
+		// process each step
+		for _, step := range steps {
+			// convert each step to a map
+
+			stepMap, stepMapOk := step.(map[string]interface{})
+
+			if !stepMapOk {
+				continue
+			}
+
+			// get the step actions
+			actions, actionsOk := stepMap["Actions"].([]interface{})
+
+			if !actionsOk {
+				continue
+			}
+
+			// loop over each action
+			for _, action := range actions {
+				// convert each action to a map
+				actionMap, actionMapOk := action.(map[string]interface{})
+
+				if !actionMapOk {
+					continue
+				}
+
+				// get the properties as a map
+				propertiesMap, propertiesMapOk := actionMap["Properties"].(map[string]interface{})
+
+				if !propertiesMapOk {
+					continue
+				}
+
+				// loop over each key value pair
+				for propertyName, propertyValue := range propertiesMap {
+					// Get properties that are map. These are secrets. Regular properties are just strings.
+					propertyValueMap, propertyValueMapOk := propertyValue.(map[string]interface{})
+
+					if !propertyValueMapOk {
+						continue
+					}
+
+					// get the sensitive value
+					sensitiveValue, sensitiveValueOk := propertyValueMap["SensitiveValue"]
+
+					if !sensitiveValueOk {
+						continue
+					}
+
+					// At this point we have drilled down into a sensitive value defined in an action property bag
+					sensitiveValueValue, sensitiveValueValueOk := sensitiveValue.(string)
+
+					if !sensitiveValueValueOk {
+						continue
+					}
+
+					// Out of an abundance of caution, make sure the Id property is a string
+					actionId, actionIdOk := actionMap["Id"].(string)
+
+					if !actionIdOk {
+						continue
+					}
+
+					// We can now decrypt the sensitive value
+					variableName := naming.StepPropertySecretName(id, actionId, propertyName)
+					variableValue, err := DecryptSensitiveVariable(masterKey, sensitiveValueValue)
+
+					if err != nil {
+						return "", err
+					}
+
+					if tfVar, err := writeVariableFile(variableName, variableValue); err != nil {
+						return "", err
+					} else {
+						builder.WriteString(tfVar)
 					}
 				}
 			}
