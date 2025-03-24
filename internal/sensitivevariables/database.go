@@ -891,7 +891,7 @@ func getMachineProxyPassword(ctx context.Context, db *sql.DB, masterKey string) 
 			continue
 		}
 
-		variableName := naming.MachineProxyPassword(fmt.Sprint(result["Name"]))
+		variableName := naming.MachineProxyPassword(fmt.Sprint(name))
 		variableValue, err := DecryptSensitiveVariable(masterKey, fmt.Sprint(password))
 
 		if err != nil {
