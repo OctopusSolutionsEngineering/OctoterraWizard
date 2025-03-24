@@ -65,6 +65,10 @@ func StepTemplateParameterSecretName(parentId string, parameterId string) string
 	return "steptemplate_" + hash.Sha256Hash(parentId+"_"+parameterId) + "_sensitive_value"
 }
 
+func MachineProxyPassword(name string) string {
+	return "machine_proxy_" + sanitizeName(name) + "_password"
+}
+
 // sanitizeName creates a string that can be used as a name for HCL resources
 // From the Terraform docs:
 // A name must start with a letter or underscore and may contain only letters, digits, underscores, and dashes.

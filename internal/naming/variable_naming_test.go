@@ -113,6 +113,14 @@ func TestStepTemplateParameterSecretName(t *testing.T) {
 	}
 }
 
+func TestMachineProxyPassword(t *testing.T) {
+	expected := "machine_proxy_test_machine_password"
+	result := MachineProxyPassword("Test Machine")
+	if result != expected {
+		t.Errorf("expected %s, got %s", expected, result)
+	}
+}
+
 func TestSanitizeName(t *testing.T) {
 	tests := []struct {
 		input    string
