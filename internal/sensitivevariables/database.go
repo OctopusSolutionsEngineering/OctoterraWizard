@@ -136,6 +136,15 @@ func ExtractVariables(server string, port string, database string, username stri
 
 	sensitiveValues.WriteString(targetVars)
 
+	// Get the proxy vars
+	proxyVars, err := getMachineProxyPassword(ctx, db, masterKey)
+
+	if err != nil {
+		return "", err
+	}
+
+	sensitiveValues.WriteString(proxyVars)
+
 	return sensitiveValues.String(), err
 }
 
@@ -837,6 +846,62 @@ func getTargetSensitiveValues(ctx context.Context, db *sql.DB, masterKey string)
 			} else {
 				builder.WriteString(tfVar)
 			}
+		}
+
+	}
+
+	return builder.String(), nil
+}
+
+func getMachineProxyPassword(ctx context.Context, db *sql.DB, masterKey string) (string, error) {
+	var name string
+	var jsonValue string
+
+	timeout, cancel := context.WithTimeout(ctx, 60*time.Second)
+	defer cancel()
+	rows, err := db.QueryContext(timeout, "SELECT Name, JSON FROM Proxy")
+	if err != nil {
+		return "", err
+	}
+
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Println(err.Error())
+		}
+	}()
+
+	var builder strings.Builder
+
+	for rows.Next() {
+		if err = rows.Scan(&name, &jsonValue); err != nil {
+			return "", err
+		}
+
+		var result map[string]interface{}
+
+		if err := json.Unmarshal([]byte(jsonValue), &result); err != nil {
+			return "", err
+		}
+
+		// Each account type stores different secrets
+		password, passwordOk := result["Password"].(string)
+
+		// Must have one sensitive value to extract
+		if !(passwordOk) {
+			continue
+		}
+
+		variableName := naming.MachineProxyPassword(fmt.Sprint(result["Name"]))
+		variableValue, err := DecryptSensitiveVariable(masterKey, fmt.Sprint(password))
+
+		if err != nil {
+			return "", err
+		}
+
+		if tfVar, err := writeVariableFile(variableName, variableValue); err != nil {
+			return "", err
+		} else {
+			builder.WriteString(tfVar)
 		}
 
 	}
