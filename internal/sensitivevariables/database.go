@@ -33,6 +33,24 @@ func GetDatabaseConnection(server string, port string, database string, username
 	return db, nil
 }
 
+func CheckTableExists(ctx context.Context, db *sql.DB, tableName string) (bool, error) {
+	query := `
+		SELECT CASE 
+			WHEN EXISTS (
+				SELECT 1 
+				FROM INFORMATION_SCHEMA.TABLES 
+				WHERE TABLE_NAME = @p1
+			) THEN 1 
+			ELSE 0 
+		END`
+	var exists int
+	err := db.QueryRow(query, tableName).Scan(&exists)
+	if err != nil {
+		return false, err
+	}
+	return exists == 1, nil
+}
+
 // ExtractVariables extracts sensitive variables from the database and returns them as terraform variable values
 func ExtractVariables(server string, port string, database string, username string, password string, masterKey string) (string, error) {
 	ctx, stop := context.WithCancel(context.Background())
@@ -515,6 +533,17 @@ func getGitCredsSensitiveValues(ctx context.Context, db *sql.DB, masterKey strin
 
 	timeout, cancel := context.WithTimeout(ctx, 60*time.Second)
 	defer cancel()
+
+	// Not all versions of Octopus have this table
+	exists, err := CheckTableExists(ctx, db, "GitCredential")
+	if err != nil {
+		return "", err
+	}
+
+	if !exists {
+		return "", nil
+	}
+
 	rows, err := db.QueryContext(timeout, "SELECT Id, JSON FROM GitCredential")
 	if err != nil {
 		return "", err
