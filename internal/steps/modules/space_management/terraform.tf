@@ -231,7 +231,7 @@ resource "octopusdeploy_aws_account" "account_aws_account" {
   environments                      = null
   tenant_tags = []
   tenants                           = null
-  tenanted_deployment_participation = "Untenanted"
+  tenanted_deployment_participation = "TenantedOrUntenanted"
   access_key                        = var.terraform_state_aws_accesskey
   secret_key                        = var.terraform_state_aws_secretkey
 }
