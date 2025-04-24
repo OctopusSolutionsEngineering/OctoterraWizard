@@ -5,6 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
+	"strings"
+	"time"
+
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/environments"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/feeds"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/projects"
@@ -14,10 +19,6 @@ import (
 	"github.com/mcasperson/OctoterraWizard/internal/octoerrors"
 	"github.com/mcasperson/OctoterraWizard/internal/state"
 	"github.com/samber/lo"
-	"io"
-	"net/http"
-	"strings"
-	"time"
 )
 
 const RetryCount = 5
@@ -308,6 +309,15 @@ func PublishRunbookRetry(state state.State, runbookName string, projectName stri
 
 		if err != nil {
 			packageErrors = errors.Join(packageErrors, err)
+			return nil
+		}
+		// Check for the possibility of no package versions being returned
+		if len(versions.Items) == 0 {
+			packageErrors = errors.Join(packageErrors, fmt.Errorf(
+				"No versions found for package '%s' in feed '%s' in runbook snapshot",
+				snapshotPackage["PackageId"],
+				snapshotPackage["FeedId"],
+			))
 			return nil
 		}
 
