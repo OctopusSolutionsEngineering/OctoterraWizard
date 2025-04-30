@@ -123,15 +123,11 @@ func (s StartProjectExportStep) Execute(statusCallback func(message string)) err
 		return errors.Join(errors.New("failed to create client"), err)
 	}
 
-	allProjects, err := infrastructure.GetProjects(myclient)
+	filteredProjects, err := infrastructure.GetProjects(myclient)
 
 	if err != nil {
 		return errors.Join(errors.New("failed to get all projects"), err)
 	}
-
-	filteredProjects := lo.Filter(allProjects, func(project *projects.Project, index int) bool {
-		return project.Name != "Octoterra Space Management" || project.IsDisabled
-	})
 
 	// We start by exporting projects that do not have "Deploy a release" steps
 	var filterErrors error = nil

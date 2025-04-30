@@ -20,7 +20,6 @@ import (
 	"github.com/mcasperson/OctoterraWizard/internal/sensitivevariables"
 	"github.com/mcasperson/OctoterraWizard/internal/strutil"
 	"github.com/mcasperson/OctoterraWizard/internal/wizard"
-	"github.com/samber/lo"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -150,10 +149,6 @@ func (s ProjectExportStep) Execute(prompt func(string, string, func(bool)), hand
 		handleError("🔴 Failed to get all the projects", err)
 		return
 	}
-
-	allProjects = lo.Filter(allProjects, func(project *projects.Project, index int) bool {
-		return project.Name != spaceManagementProject
-	})
 
 	lvsExists, lvs, err := query.LibraryVariableSetExists(myclient, "Octoterra")
 
