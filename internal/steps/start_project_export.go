@@ -9,7 +9,7 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/deployments"
-	projects2 "github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/projects"
+	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/projects"
 	"github.com/mcasperson/OctoterraWizard/internal/data"
 	"github.com/mcasperson/OctoterraWizard/internal/infrastructure"
 	"github.com/mcasperson/OctoterraWizard/internal/logutil"
@@ -123,24 +123,24 @@ func (s StartProjectExportStep) Execute(statusCallback func(message string)) err
 		return errors.Join(errors.New("failed to create client"), err)
 	}
 
-	projects, err := projects2.GetAll(myclient, myclient.GetSpaceID())
+	allProjects, err := infrastructure.GetProjects(myclient)
 
 	if err != nil {
 		return errors.Join(errors.New("failed to get all projects"), err)
 	}
 
-	filteredProjects := lo.Filter(projects, func(project *projects2.Project, index int) bool {
-		return project.Name != "Octoterra Space Management"
+	filteredProjects := lo.Filter(allProjects, func(project *projects.Project, index int) bool {
+		return project.Name != "Octoterra Space Management" || project.IsDisabled
 	})
 
 	// We start by exporting projects that do not have "Deploy a release" steps
 	var filterErrors error = nil
-	regularProjects := lo.Filter(filteredProjects, func(project *projects2.Project, index int) bool {
+	regularProjects := lo.Filter(filteredProjects, func(project *projects.Project, index int) bool {
 
 		var process *deployments.DeploymentProcess = nil
 
 		if project.IsVersionControlled {
-			if gitPersistence, ok := project.PersistenceSettings.(projects2.GitPersistenceSettings); ok {
+			if gitPersistence, ok := project.PersistenceSettings.(projects.GitPersistenceSettings); ok {
 
 				process, err = deployments.GetDeploymentProcessByGitRef(myclient, myclient.GetSpaceID(), project, "refs/heads/"+gitPersistence.DefaultBranch())
 
@@ -183,8 +183,8 @@ func (s StartProjectExportStep) Execute(statusCallback func(message string)) err
 		Now we export projects that have "Deploy a release" steps. This ensures any child projects are available to
 		be queried via a data source in the Terraform module.
 	*/
-	deployReleaseProjects := lo.Filter(filteredProjects, func(project *projects2.Project, index int) bool {
-		return !lo.ContainsBy(regularProjects, func(regularProject *projects2.Project) bool {
+	deployReleaseProjects := lo.Filter(filteredProjects, func(project *projects.Project, index int) bool {
+		return !lo.ContainsBy(regularProjects, func(regularProject *projects.Project) bool {
 			return project.ID == regularProject.ID
 		})
 	})
@@ -202,7 +202,7 @@ func (s StartProjectExportStep) Execute(statusCallback func(message string)) err
 	return runAndTaskError
 }
 
-func (s StartProjectExportStep) serializeProjects(filteredProjects []*projects2.Project, statusCallback func(message string)) error {
+func (s StartProjectExportStep) serializeProjects(filteredProjects []*projects.Project, statusCallback func(message string)) error {
 	var runAndTaskError error = nil
 
 	for _, project := range filteredProjects {
@@ -243,7 +243,7 @@ func (s StartProjectExportStep) serializeProjects(filteredProjects []*projects2.
 	return runAndTaskError
 }
 
-func (s StartProjectExportStep) deployProjects(filteredProjects []*projects2.Project, statusCallback func(message string)) error {
+func (s StartProjectExportStep) deployProjects(filteredProjects []*projects.Project, statusCallback func(message string)) error {
 	var runAndTaskError error = nil
 
 	for _, project := range filteredProjects {

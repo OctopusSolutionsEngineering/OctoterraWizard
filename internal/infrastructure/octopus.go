@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/client"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/environments"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/feeds"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/projects"
@@ -365,4 +366,15 @@ func PublishRunbookRetry(state state.State, runbookName string, projectName stri
 	fmt.Println(runbookSnapshot)
 
 	return nil
+}
+
+func GetProjects(myclient *client.Client) ([]*projects.Project, error) {
+	if allprojects, err := myclient.Projects.GetAll(); err != nil {
+		return nil, errors.Join(errors.New("failed to get all projects"), err)
+	} else {
+		filteredProjects := lo.Filter(allprojects, func(item *projects.Project, index int) bool {
+			return !item.IsDisabled
+		})
+		return filteredProjects, nil
+	}
 }

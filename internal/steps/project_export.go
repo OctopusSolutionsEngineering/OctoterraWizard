@@ -13,6 +13,7 @@ import (
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/client"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/projects"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/runbooks"
+	"github.com/mcasperson/OctoterraWizard/internal/infrastructure"
 	"github.com/mcasperson/OctoterraWizard/internal/logutil"
 	"github.com/mcasperson/OctoterraWizard/internal/octoclient"
 	"github.com/mcasperson/OctoterraWizard/internal/query"
@@ -143,7 +144,7 @@ func (s ProjectExportStep) Execute(prompt func(string, string, func(bool)), hand
 		return
 	}
 
-	allProjects, err := s.getProjects(myclient)
+	allProjects, err := infrastructure.GetProjects(myclient)
 
 	if err != nil {
 		handleError("🔴 Failed to get all the projects", err)
@@ -353,14 +354,6 @@ func (s ProjectExportStep) Execute(prompt func(string, string, func(bool)), hand
 
 	handleSuccess("🟢 Added runbooks to all projects")
 
-}
-
-func (s ProjectExportStep) getProjects(myclient *client.Client) ([]*projects.Project, error) {
-	if allprojects, err := myclient.Projects.GetAll(); err != nil {
-		return nil, errors.Join(errors.New("failed to get all projects"), err)
-	} else {
-		return allprojects, nil
-	}
 }
 
 func (s ProjectExportStep) deleteRunbook(myclient *client.Client, runbook *runbooks.Runbook) error {
