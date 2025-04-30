@@ -378,12 +378,14 @@ func PublishRunbookRetry(state state.State, runbookName string, projectName stri
 	return nil
 }
 
+// GetProjects gets all projects, excluding the "Octoterra Space Management" project and any
+// that are disabled.
 func GetProjects(myclient *client.Client) ([]*projects.Project, error) {
 	if allprojects, err := myclient.Projects.GetAll(); err != nil {
 		return nil, errors.Join(errors.New("failed to get all projects"), err)
 	} else {
 		filteredProjects := lo.Filter(allprojects, func(item *projects.Project, index int) bool {
-			return !item.IsDisabled
+			return !item.IsDisabled && item.Name != "Octoterra Space Management"
 		})
 		return filteredProjects, nil
 	}
