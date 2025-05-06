@@ -15,6 +15,7 @@ func ValidateDatabase(state state.State) error {
 	db, err := sensitivevariables.GetDatabaseConnection(state.DatabaseServer, state.DatabasePort, state.DatabaseName, state.DatabaseUser, state.DatabasePass, ctx)
 	if err != nil {
 		log.Fatal(err)
+		return err
 	}
 	defer func() {
 		if err := db.Close(); err != nil {
