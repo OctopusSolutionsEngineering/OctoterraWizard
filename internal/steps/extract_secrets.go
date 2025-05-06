@@ -89,7 +89,8 @@ func (s ExtractSecrets) GetContainer(parent fyne.Window) *fyne.Container {
 
 	introText := widget.NewLabel(strutil.TrimMultilineWhitespace(`
 		Enter the Octopus database server, port, database name, username, password, and master key.
-		The master key is used to decrypt the sensitive values stored in the database.`))
+		The master key is used to decrypt the sensitive values stored in the database.
+		Skip this step if you are migrating from a cloud instance, as you do not have database access.`))
 	linkUrl, _ := url.Parse("https://octopus.com/docs/security/data-encryption")
 	link := widget.NewHyperlink("Learn about the master key.", linkUrl)
 
