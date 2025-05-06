@@ -75,13 +75,13 @@ func (s ExtractSecrets) GetContainer(parent fyne.Window) *fyne.Container {
 	s.result = widget.NewLabel("")
 
 	validation := func(input string) {
-		next.Disable()
+		s.extractVariables.Disable()
 
 		if s.dbServer.Text == "" || s.database.Text == "" || s.port.Text == "" || s.masterKey.Text == "" || s.password.Text == "" || s.username.Text == "" {
 			return
 		}
 
-		next.Enable()
+		s.extractVariables.Enable()
 	}
 
 	heading := widget.NewLabel("Sensitive Value Extraction")
