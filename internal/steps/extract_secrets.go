@@ -75,13 +75,13 @@ func (s ExtractSecrets) GetContainer(parent fyne.Window) *fyne.Container {
 	s.result = widget.NewLabel("")
 
 	validation := func(input string) {
-		next.Disable()
+		s.extractVariables.Disable()
 
 		if s.dbServer.Text == "" || s.database.Text == "" || s.port.Text == "" || s.masterKey.Text == "" || s.password.Text == "" || s.username.Text == "" {
 			return
 		}
 
-		next.Enable()
+		s.extractVariables.Enable()
 	}
 
 	heading := widget.NewLabel("Sensitive Value Extraction")
@@ -89,7 +89,8 @@ func (s ExtractSecrets) GetContainer(parent fyne.Window) *fyne.Container {
 
 	introText := widget.NewLabel(strutil.TrimMultilineWhitespace(`
 		Enter the Octopus database server, port, database name, username, password, and master key.
-		The master key is used to decrypt the sensitive values stored in the database.`))
+		The master key is used to decrypt the sensitive values stored in the database.
+		Skip this step if you are migrating from a cloud instance, as you do not have database access.`))
 	linkUrl, _ := url.Parse("https://octopus.com/docs/security/data-encryption")
 	link := widget.NewHyperlink("Learn about the master key.", linkUrl)
 
@@ -127,15 +128,6 @@ func (s ExtractSecrets) GetContainer(parent fyne.Window) *fyne.Container {
 	s.masterKey.SetPlaceHolder("xxxxxxxxxxxxxxxxxxxxxxxxxx")
 	s.masterKey.SetText(s.State.DatabaseMasterKey)
 
-	validation("")
-
-	s.dbServer.OnChanged = validation
-	s.port.OnChanged = validation
-	s.database.OnChanged = validation
-	s.username.OnChanged = validation
-	s.password.OnChanged = validation
-	s.masterKey.OnChanged = validation
-
 	s.extractVariables = widget.NewButton("Extract sensitive values", func() {
 		next.Disable()
 		previous.Disable()
@@ -172,6 +164,15 @@ func (s ExtractSecrets) GetContainer(parent fyne.Window) *fyne.Container {
 			}
 		}()
 	})
+
+	validation("")
+
+	s.dbServer.OnChanged = validation
+	s.port.OnChanged = validation
+	s.database.OnChanged = validation
+	s.username.OnChanged = validation
+	s.password.OnChanged = validation
+	s.masterKey.OnChanged = validation
 
 	formLayout := container.New(layout.NewFormLayout(), serverLabel, s.dbServer, portLabel, s.port, databaseLabel, s.database, usernameLabel, s.username, passwordLabel, s.password, masterKeyPassword, s.masterKey)
 
