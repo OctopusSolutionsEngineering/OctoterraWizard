@@ -127,15 +127,6 @@ func (s ExtractSecrets) GetContainer(parent fyne.Window) *fyne.Container {
 	s.masterKey.SetPlaceHolder("xxxxxxxxxxxxxxxxxxxxxxxxxx")
 	s.masterKey.SetText(s.State.DatabaseMasterKey)
 
-	validation("")
-
-	s.dbServer.OnChanged = validation
-	s.port.OnChanged = validation
-	s.database.OnChanged = validation
-	s.username.OnChanged = validation
-	s.password.OnChanged = validation
-	s.masterKey.OnChanged = validation
-
 	s.extractVariables = widget.NewButton("Extract sensitive values", func() {
 		next.Disable()
 		previous.Disable()
@@ -172,6 +163,15 @@ func (s ExtractSecrets) GetContainer(parent fyne.Window) *fyne.Container {
 			}
 		}()
 	})
+
+	validation("")
+
+	s.dbServer.OnChanged = validation
+	s.port.OnChanged = validation
+	s.database.OnChanged = validation
+	s.username.OnChanged = validation
+	s.password.OnChanged = validation
+	s.masterKey.OnChanged = validation
 
 	formLayout := container.New(layout.NewFormLayout(), serverLabel, s.dbServer, portLabel, s.port, databaseLabel, s.database, usernameLabel, s.username, passwordLabel, s.password, masterKeyPassword, s.masterKey)
 
