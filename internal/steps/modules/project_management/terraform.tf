@@ -299,6 +299,7 @@ resource "octopusdeploy_runbook_process" "deploy_project_aws" {
         "OctoterraApply.Octopus.ApiKey" = "#{Octopus.Destination.ApiKey}"
         "Octopus.Action.GoogleCloud.ImpersonateServiceAccount" = "False"
         "Octopus.Action.Terraform.GoogleCloudAccount" = "False"
+        "OctoterraApply.Terraform.AdditionalApplyParams" = ""
         "Octopus.Action.Terraform.AdditionalActionParams" = "-var=octopus_server=#{OctoterraApply.Octopus.ServerUrl} -var=octopus_apikey=#{OctoterraApply.Octopus.ApiKey} -var=octopus_space_id=#{OctoterraApply.Octopus.SpaceID} #{if OctoterraApply.Terraform.AdditionalApplyParams}#{OctoterraApply.Terraform.AdditionalApplyParams}#{/if}"
         "Octopus.Action.Terraform.FileSubstitution" = "**/project_variable_sensitive*.tf\n**/terraform.tfvars"
         "Octopus.Action.Script.ScriptSource" = "Package"
@@ -388,6 +389,7 @@ resource "octopusdeploy_runbook_process" "deploy_project_azure" {
         "OctoterraApply.Azure.Storage.Container"                = var.terraform_state_azure_storage_container
         "OctoterraApply.Azure.Storage.Key"                      = "Project_#{Octopus.Project.Name | Replace \"[^A-Za-z0-9]\" \"_\"}"
         "OctoterraApply.Azure.Account"                          = "Terraform.Azure.Account"
+        "OctoterraApply.Terraform.AdditionalApplyParams"        = ""
         "Octopus.Action.Terraform.AdditionalActionParams"       = "-var=octopus_server=#{OctoterraApply.Octopus.ServerUrl} -var=octopus_apikey=#{OctoterraApply.Octopus.ApiKey} -var=octopus_space_id=#{OctoterraApply.Octopus.SpaceID} #{if OctoterraApply.Terraform.AdditionalApplyParams}#{OctoterraApply.Terraform.AdditionalApplyParams}#{/if}"
         "Octopus.Action.Script.ScriptSource"                    = "Package"
         "Octopus.Action.Terraform.GoogleCloudAccount"           = "False"
