@@ -25,6 +25,7 @@ type State struct {
 	AzurePassword                 string
 	ExcludeAllLibraryVariableSets bool
 	EnableVariableSpreading       bool
+	EnableProjectRenaming         bool
 
 	DatabaseServer    string
 	DatabaseUser      string

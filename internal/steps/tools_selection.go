@@ -22,7 +22,7 @@ func (s ToolsSelectionStep) GetContainer(parent fyne.Window) *fyne.Container {
 			Wizard:   s.Wizard,
 			BaseStep: BaseStep{State: s.State}})
 	}, func() {
-		s.Wizard.ShowWizardStep(BackendSelectionStep{
+		s.Wizard.ShowWizardStep(RenameProjectStep{
 			Wizard:   s.Wizard,
 			BaseStep: BaseStep{State: s.State}})
 	})

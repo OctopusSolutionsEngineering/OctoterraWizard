@@ -158,7 +158,7 @@ func (s ProjectExportStep) Execute(prompt func(string, string, func(bool)), hand
 	}
 
 	if !lvsExists {
-		handleError("🔴 The library variable set Octoterra could not be found", errors.New("resource not found"))
+		handleError("🔴 The library variable set Octoterra could not be found. Make sure you have run the \"Space Serialization Runbooks\" step.", errors.New("resource not found"))
 		return
 	}
 
@@ -296,6 +296,7 @@ func (s ProjectExportStep) Execute(prompt func(string, string, func(bool)), hand
 			"-var=terraform_backend="+s.State.BackendType,
 			"-var=use_container_images="+fmt.Sprint(s.State.UseContainerImages),
 			"-var=default_secret_variables=false",
+			"-var=customise_destination_project_name="+fmt.Sprint(s.State.EnableProjectRenaming),
 			"-var=octopus_server="+s.State.Server,
 			"-var=octopus_apikey="+s.State.ApiKey,
 			"-var=octopus_space_id="+s.State.Space,

@@ -21,7 +21,7 @@ var AzureStorage = "Azure Storage"
 func (s BackendSelectionStep) GetContainer(parent fyne.Window) *fyne.Container {
 
 	bottom, _, _ := s.BuildNavigation(func() {
-		s.Wizard.ShowWizardStep(ToolsSelectionStep{
+		s.Wizard.ShowWizardStep(RenameProjectStep{
 			Wizard:   s.Wizard,
 			BaseStep: BaseStep{State: s.State}})
 	}, func() {

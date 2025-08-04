@@ -90,6 +90,8 @@ github.com/OctopusDeploy/go-octopusdeploy/v2 v2.48.1-0.20240714221011-2296edb503
 github.com/OctopusDeploy/go-octopusdeploy/v2 v2.48.1-0.20240714221011-2296edb5037e/go.mod h1:ggvOXzMnq+w0pLg6C9zdjz6YBaHfO3B3tqmmB7JQdaw=
 github.com/OctopusDeploy/go-octopusdeploy/v2 v2.64.1-0.20250105233436-6686feb4a3e6 h1:XdRMyZ2DNY5WdSr9It6JCNhZbce9UdLRzGQd3c9BHQg=
 github.com/OctopusDeploy/go-octopusdeploy/v2 v2.64.1-0.20250105233436-6686feb4a3e6/go.mod h1:ggvOXzMnq+w0pLg6C9zdjz6YBaHfO3B3tqmmB7JQdaw=
+github.com/OctopusDeploy/go-octopusdeploy/v2 v2.78.1-0.20250804222835-82d998586c96 h1:TSrrJL8jaKOKHplAyfwPnakEJ5hjkiW0rfjr0qY9bYo=
+github.com/OctopusDeploy/go-octopusdeploy/v2 v2.78.1-0.20250804222835-82d998586c96/go.mod h1:ZCOnCz9ae/uuOk7AIQ9NzjnzFbuN8Q7H3oj2Eq4QSgQ=
 github.com/OctopusSolutionsEngineering/OctopusTerraformTestFramework v0.0.0-20241021204950-57a4bd076a2c h1:g23/BQJgEfGlmpWlWHxWrBCEyi8tzPQUVDY/40jIHQE=
 github.com/OctopusSolutionsEngineering/OctopusTerraformTestFramework v0.0.0-20241021204950-57a4bd076a2c/go.mod h1:gWbTP4KcM9cVx7MLOXv3lo7c8qHAWNBiRsEV57Ul4qY=
 github.com/antihax/optional v1.0.0/go.mod h1:uupD/76wgC+ih3iEmQUL+0Ugr19nfwCT1kdvxnR2qWY=
@@ -218,6 +220,8 @@ github.com/fyne-io/oksvg v0.1.0 h1:7EUKk3HV3Y2E+qypp3nWqMXD7mum0hCw2KEGhI1fnBw=
 github.com/fyne-io/oksvg v0.1.0/go.mod h1:dJ9oEkPiWhnTFNCmRgEze+YNprJF7YRbpjgpWS4kzoI=
 github.com/gabriel-vasile/mimetype v1.4.6 h1:3+PzJTKLkvgjeTbts6msPJt4DixhT4YtFNf1gtGe3zc=
 github.com/gabriel-vasile/mimetype v1.4.6/go.mod h1:JX1qVKqZd40hUPpAfiNTe0Sne7hdfKSbOqqmkq8GCXc=
+github.com/gabriel-vasile/mimetype v1.4.8 h1:FfZ3gj38NjllZIeJAmMhr+qKL8Wu+nOoI3GqacKw1NM=
+github.com/gabriel-vasile/mimetype v1.4.8/go.mod h1:ByKUIKGjh1ODkGM1asKUbQZOLGrPjydw3hYPU2YU9t8=
 github.com/ghodss/yaml v1.0.0/go.mod h1:4dBDuWmgqj2HViK6kFavaiC9ZROes6MMH2rRYeMEF04=
 github.com/go-gl/gl v0.0.0-20211210172815-726fda9656d6/go.mod h1:9YTyiznxEY1fVinfM7RvRcjRHbw2xLBJ3AAGIT0I4Nw=
 github.com/go-gl/gl v0.0.0-20231021071112-07e5d0ea2e71 h1:5BVwOaUSBTlVZowGO6VZGw2H/zl9nrd3eCZfYV+NfQA=
@@ -243,6 +247,8 @@ github.com/go-playground/universal-translator v0.18.1 h1:Bcnm0ZwsGyWbCzImXv+pAJn
 github.com/go-playground/universal-translator v0.18.1/go.mod h1:xekY+UJKNuX9WP91TpwSH2VMlDf28Uj24BCp08ZFTUY=
 github.com/go-playground/validator/v10 v10.22.1 h1:40JcKH+bBNGFczGuoBYgX4I6m/i27HYW8P9FDk5PbgA=
 github.com/go-playground/validator/v10 v10.22.1/go.mod h1:dbuPbCMFw/DrkbEynArYaCwl3amGuJotoKCe95atGMM=
+github.com/go-playground/validator/v10 v10.25.0 h1:5Dh7cjvzR7BRZadnsVOzPhWsrwUr0nmsZJxEAnFLNO8=
+github.com/go-playground/validator/v10 v10.25.0/go.mod h1:GGzBIJMuE98Ic/kJsBXbz1x/7cByt++cQ+YOuDM5wus=
 github.com/go-text/render v0.2.0 h1:LBYoTmp5jYiJ4NPqDc2pz17MLmA3wHw1dZSVGcOdeAc=
 github.com/go-text/render v0.2.0/go.mod h1:CkiqfukRGKJA5vZZISkjSYrcdtgKQWRa2HIzvwNN5SU=
 github.com/go-text/typesetting v0.2.0 h1:fbzsgbmk04KiWtE+c3ZD4W2nmCRzBqrqQOvYlwAOdho=

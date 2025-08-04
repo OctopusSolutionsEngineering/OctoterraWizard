@@ -99,6 +99,7 @@ func main() {
 			DatabasePort:                  os.Getenv("OCTOTERRAWIZ_DATABASE_PORT"),
 			DatabaseName:                  os.Getenv("OCTOTERRAWIZ_DATABASE_NAME"),
 			DatabaseMasterKey:             os.Getenv("OCTOTERRAWIZ_DATABASE_MASTERKEY"),
+			EnableProjectRenaming:         strings.ToLower(os.Getenv("OCTOTERRAWIZ_ENABLE_PROJECT_RENAMING")) == "true",
 		}},
 	})
 	wiz.Window.ShowAndRun()

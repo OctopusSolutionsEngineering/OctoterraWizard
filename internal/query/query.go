@@ -75,7 +75,8 @@ func GetStepTemplateId(myclient *client.Client, state state.State, name string) 
 	})
 
 	if len(filteredStepTemplates) == 0 {
-		return "", errors.New("could not find the step template"), "🔴 Failed to find the step template called " + name
+		return "", errors.New("could not find the step template - make sure you have run the \"Install Step Templates\" step"),
+			"🔴 Failed to find the step template called " + name
 	}
 
 	return filteredStepTemplates[0].Id, nil, ""

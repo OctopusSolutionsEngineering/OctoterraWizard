@@ -41,6 +41,7 @@ The default values used by the wizard are defined in environment variables:
 * `OCTOTERRAWIZ_DATABASE_PORT` - The database port
 * `OCTOTERRAWIZ_DATABASE_NAME` - The database name
 * `OCTOTERRAWIZ_DATABASE_MASTERKEY` - The octopus master key
+* `OCTOTERRAWIZ_ENABLE_PROJECT_RENAMING` - If set to true, the runbooks used to apply projects use a prompted variable for the destination project name.
 
 ## Screenshot
 
