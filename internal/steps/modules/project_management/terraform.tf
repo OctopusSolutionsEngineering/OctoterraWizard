@@ -329,7 +329,7 @@ resource "octopusdeploy_runbook_process" "deploy_project_aws" {
         "Octopus.Action.GoogleCloud.ImpersonateServiceAccount" = "False"
         "Octopus.Action.Terraform.GoogleCloudAccount" = "False"
         # If a project name is set, infer the terraform variable that defines the project name, and set it to the destination project name.
-        "OctoterraApply.Terraform.AdditionalApplyParams" = "#{if OctoterraWiz.Destination.ProjectName}\"-var=project_#{Octopus.Project.Name | Replace \"[^A-Za-z0-9]\" \"_\" | ToLower}=#{OctoterraWiz.Destination.ProjectName}\"#{/if}"
+        "OctoterraApply.Terraform.AdditionalApplyParams" = "#{if OctoterraWiz.Destination.ProjectName}\"-var=project_#{Octopus.Project.Name | Replace \"[^A-Za-z0-9]\" \"_\" | ToLower}_name=#{OctoterraWiz.Destination.ProjectName}\"#{/if}"
         "Octopus.Action.Terraform.AdditionalActionParams" = "-var=octopus_server=#{OctoterraApply.Octopus.ServerUrl} -var=octopus_apikey=#{OctoterraApply.Octopus.ApiKey} -var=octopus_space_id=#{OctoterraApply.Octopus.SpaceID} #{if OctoterraApply.Terraform.AdditionalApplyParams}#{OctoterraApply.Terraform.AdditionalApplyParams}#{/if}"
         "Octopus.Action.Terraform.FileSubstitution" = "**/project_variable_sensitive*.tf\n**/terraform.tfvars"
         "Octopus.Action.Script.ScriptSource" = "Package"
@@ -420,7 +420,7 @@ resource "octopusdeploy_runbook_process" "deploy_project_azure" {
         "OctoterraApply.Azure.Storage.Key"                      = "Project_#{if OctoterraWiz.Destination.ProjectName}#{OctoterraWiz.Destination.ProjectName | Replace \"[^A-Za-z0-9]\" \"_\"}#{/if}#{unless OctoterraWiz.Destination.ProjectName}#{Octopus.Project.Name | Replace \"[^A-Za-z0-9]\" \"_\"}#{/unless}"
         "OctoterraApply.Azure.Account"                          = "Terraform.Azure.Account"
         # If a project name is set, infer the terraform variable that defines the project name, and set it to the destination project name.
-        "OctoterraApply.Terraform.AdditionalApplyParams"        = "#{if OctoterraWiz.Destination.ProjectName}\"-var=project_#{Octopus.Project.Name | Replace \"[^A-Za-z0-9]\" \"_\" | ToLower}=#{OctoterraWiz.Destination.ProjectName}\"#{/if}"
+        "OctoterraApply.Terraform.AdditionalApplyParams"        = "#{if OctoterraWiz.Destination.ProjectName}\"-var=project_#{Octopus.Project.Name | Replace \"[^A-Za-z0-9]\" \"_\" | ToLower}_name=#{OctoterraWiz.Destination.ProjectName}\"#{/if}"
         "Octopus.Action.Terraform.AdditionalActionParams"       = "-var=octopus_server=#{OctoterraApply.Octopus.ServerUrl} -var=octopus_apikey=#{OctoterraApply.Octopus.ApiKey} -var=octopus_space_id=#{OctoterraApply.Octopus.SpaceID} #{if OctoterraApply.Terraform.AdditionalApplyParams}#{OctoterraApply.Terraform.AdditionalApplyParams}#{/if}"
         "Octopus.Action.Script.ScriptSource"                    = "Package"
         "Octopus.Action.Terraform.GoogleCloudAccount"           = "False"
