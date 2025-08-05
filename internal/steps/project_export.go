@@ -13,6 +13,7 @@ import (
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/client"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/projects"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/runbooks"
+	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/variables"
 	"github.com/mcasperson/OctoterraWizard/internal/infrastructure"
 	"github.com/mcasperson/OctoterraWizard/internal/logutil"
 	"github.com/mcasperson/OctoterraWizard/internal/octoclient"
@@ -228,6 +229,30 @@ func (s ProjectExportStep) Execute(prompt func(string, string, func(bool)), hand
 				deleteRunbook2Func(true)
 			}
 		}
+
+		variableExists, matchingVariables, err := s.projectVariableExists(myclient, project.ID, "OctoterraWiz.Destination.ProjectName")
+
+		if variableExists {
+			for _, variable := range matchingVariables {
+				deleteVariableFunc := func(b bool) {
+					if b {
+						if err := s.deleteProjectVariable(myclient, project.ID, variable); err != nil {
+							s.result.SetText("🔴 Failed to delete the resource")
+							s.logs.SetText(err.Error())
+						} else if s.State.PromptForDelete {
+							s.Execute(prompt, handleError, handleSuccess, status)
+						}
+					}
+				}
+
+				if s.State.PromptForDelete {
+					prompt("Variable Exists", "The variable \""+variable.Name+"\" already exists in project "+project.Name+". Do you want to delete it? It is usually safe to delete this resource.", deleteVariableFunc)
+					return
+				} else {
+					deleteVariableFunc(true)
+				}
+			}
+		}
 	}
 
 	// Find the step template ID
@@ -369,5 +394,25 @@ func (s ProjectExportStep) runbookExists(myclient *client.Client, projectId stri
 		return true, runbook, nil
 	} else {
 		return false, nil, errors.Join(errors.New("failed to get runbook by name "+runbookName+" in project "+projectId), err)
+	}
+}
+
+func (s ProjectExportStep) deleteProjectVariable(myclient *client.Client, projectId string, variable *variables.Variable) error {
+	fmt.Println("Attempting to delete variable " + variable.ID)
+	if _, err := variables.DeleteSingle(myclient, myclient.GetSpaceID(), projectId, variable.ID); err != nil {
+		return errors.Join(errors.New("failed to delete variable with ID "+variable.ID+" and name "+variable.Name), err)
+	}
+
+	return nil
+}
+
+func (s ProjectExportStep) projectVariableExists(myclient *client.Client, projectId string, variableName string) (bool, []*variables.Variable, error) {
+	if variable, err := variables.GetByName(myclient, myclient.GetSpaceID(), projectId, variableName, &variables.VariableScope{}); err == nil {
+		if variable == nil {
+			return false, nil, nil
+		}
+		return true, variable, nil
+	} else {
+		return false, nil, errors.Join(errors.New("failed to get variable by name "+variableName+" in project "+projectId), err)
 	}
 }
