@@ -164,7 +164,10 @@ func RunRunbookRetry(state state.State, runbookName string, projectName string, 
 	runbookFormValues := map[string]string{}
 
 	for _, name := range runbookFormNames {
-		runbookFormValues[name.(string)] = "dummy"
+		// OctoterraWiz.Destination.ProjectName is a special variable that is used to define the name of the destination project.
+		if name.(string) != "OctoterraWiz.Destination.ProjectName" {
+			runbookFormValues[name.(string)] = "dummy"
+		}
 	}
 
 	runbookBody := map[string]any{
