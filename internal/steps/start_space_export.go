@@ -85,7 +85,7 @@ func (s StartSpaceExportStep) GetContainer(parent fyne.Window) *fyne.Container {
 
 		result.SetText("🔵 Running the runbooks.")
 
-		if err := s.Execute(func(message string) {
+		if err := s.Execute(parent, func(message string) {
 			result.SetText(message)
 		}); err != nil {
 			if err := logutil.WriteTextToFile("start_space_export_error.txt", err.Error()); err != nil {
@@ -116,7 +116,7 @@ func (s StartSpaceExportStep) GetContainer(parent fyne.Window) *fyne.Container {
 	return content
 }
 
-func (s StartSpaceExportStep) Execute(statusCallback func(message string)) (executeError error) {
+func (s StartSpaceExportStep) Execute(parent fyne.Window, statusCallback func(message string)) (executeError error) {
 	doneCh := make(chan bool)
 	statusChan := make(chan string)
 	errorChan := make(chan error)
@@ -176,6 +176,5 @@ func (s StartSpaceExportStep) Execute(statusCallback func(message string)) (exec
 		case status := <-statusChan:
 			statusCallback(status)
 		}
-
 	}
 }
