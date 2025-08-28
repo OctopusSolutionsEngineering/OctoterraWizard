@@ -3,6 +3,8 @@ package steps
 import (
 	"errors"
 	"fmt"
+	"net/url"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
@@ -12,7 +14,6 @@ import (
 	"github.com/mcasperson/OctoterraWizard/internal/logutil"
 	"github.com/mcasperson/OctoterraWizard/internal/strutil"
 	"github.com/mcasperson/OctoterraWizard/internal/wizard"
-	"net/url"
 )
 
 type StartSpaceExportStep struct {
@@ -116,37 +117,65 @@ func (s StartSpaceExportStep) GetContainer(parent fyne.Window) *fyne.Container {
 }
 
 func (s StartSpaceExportStep) Execute(statusCallback func(message string)) (executeError error) {
-	if err := infrastructure.PublishRunbook(s.State, "__ 1. Serialize Space", "Octoterra Space Management"); err != nil {
-		return errors.Join(errors.New("failed ot publish runbook \"__ 1. Serialize Space\""), err)
-	}
+	doneCh := make(chan bool)
+	statusChan := make(chan string)
+	errorChan := make(chan error)
 
-	statusCallback("🔵 Published __ 1. Serialize Space runbook")
+	go func() {
+		defer func() {
+			doneCh <- true
+		}()
 
-	if taskId, err := infrastructure.RunRunbook(s.State, "__ 1. Serialize Space", "Octoterra Space Management"); err != nil {
-		return err
-	} else {
-		if err := infrastructure.WaitForTask(s.State, taskId, func(message string) {
-			statusCallback("🔵 __ 1. Serialize Space is " + message)
-		}); err != nil {
-			return errors.Join(errors.New("failed to get task status for task "+taskId), err)
+		if err := infrastructure.PublishRunbook(s.State, "__ 1. Serialize Space", "Octoterra Space Management"); err != nil {
+			errorChan <- errors.Join(errors.New("failed ot publish runbook \"__ 1. Serialize Space\""), err)
+			return
 		}
-	}
 
-	if err := infrastructure.PublishRunbook(s.State, "__ 2. Deploy Space", "Octoterra Space Management"); err != nil {
-		return errors.Join(errors.New("failed to publish runbook \"__ 2. Deploy Space\""), err)
-	}
+		statusChan <- "🔵 Published __ 1. Serialize Space runbook"
 
-	statusCallback("🔵 Published __ 2. Deploy Space runbook")
-
-	if taskId, err := infrastructure.RunRunbook(s.State, "__ 2. Deploy Space", "Octoterra Space Management"); err != nil {
-		return err
-	} else {
-		if err := infrastructure.WaitForTask(s.State, taskId, func(message string) {
-			statusCallback("🔵 __ 2. Deploy Space is " + message + ". This runbook can take quite some time (many hours) for large spaces.")
-		}); err != nil {
-			return errors.Join(errors.New("failed to get task status for task "+taskId), err)
+		if taskId, err := infrastructure.RunRunbook(s.State, "__ 1. Serialize Space", "Octoterra Space Management"); err != nil {
+			errorChan <- err
+			return
+		} else {
+			if err := infrastructure.WaitForTask(s.State, taskId, func(message string) {
+				statusChan <- "🔵 __ 1. Serialize Space is " + message
+			}); err != nil {
+				errorChan <- errors.Join(errors.New("failed to get task status for task "+taskId), err)
+				return
+			}
 		}
-	}
 
-	return nil
+		if err := infrastructure.PublishRunbook(s.State, "__ 2. Deploy Space", "Octoterra Space Management"); err != nil {
+			errorChan <- errors.Join(errors.New("failed to publish runbook \"__ 2. Deploy Space\""), err)
+			return
+		}
+
+		statusChan <- "🔵 Published __ 2. Deploy Space runbook"
+
+		if taskId, err := infrastructure.RunRunbook(s.State, "__ 2. Deploy Space", "Octoterra Space Management"); err != nil {
+			errorChan <- err
+			return
+		} else {
+			if err := infrastructure.WaitForTask(s.State, taskId, func(message string) {
+				statusChan <- "🔵 __ 2. Deploy Space is " + message + ". This runbook can take quite some time (many hours) for large spaces."
+			}); err != nil {
+				errorChan <- errors.Join(errors.New("failed to get task status for task "+taskId), err)
+				return
+			}
+		}
+	}()
+
+	for {
+		select {
+		case <-doneCh:
+			return nil
+
+		case errorMessage := <-errorChan:
+			return errorMessage
+
+		case status := <-statusChan:
+			statusCallback(status)
+		}
+
+	}
 }
