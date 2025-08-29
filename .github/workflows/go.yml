@@ -11,165 +11,165 @@ name: Go Build
     paths-ignore:
       - '**/*.md'
 jobs:
-#  tests:
-#    name: Test
-#    runs-on: ubuntu-latest
-#    strategy:
-#      fail-fast: false
-#      matrix:
-#        parallel: [3]
-#        index: [0, 1, 2]
-#
-#    steps:
+  tests:
+    name: Test
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        parallel: [3]
+        index: [0, 1, 2]
+
+    steps:
 #      - name: Install Latest Docker
 #        run: |
 #          curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
 #          sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu  $(lsb_release -cs)  stable"
 #          sudo apt-get update
 #          sudo apt-get install docker-ce
-#
-#      - name: Checkout code
-#        uses: actions/checkout@v4
-#
-#      - name: Set up Go
-#        uses: actions/setup-go@v5
-#        with:
-#          go-version: '1.22.5'
-#
-#      - name: Download JUnit Summary from Previous Workflow
-#        id: download-artifact
-#        uses: dawidd6/action-download-artifact@v2
-#        with:
-#          workflow_conclusion: success
-#          name: junit-test-summary
-#          if_no_artifact_found: warn
-#          branch: main
-#
-#      - name: Install Dependencies
-#        run: go get ./...
-#        shell: bash
-#
-#      - name: Install Fyne Dependencies
-#        run: |
-#          sudo apt-get update
-#          sudo apt-get -y install golang gcc libgl1-mesa-dev xorg-dev
-#        shell: bash
-#
-#      - name: Split integration tests
-#        id: test_split
-#        uses: hashicorp-forge/go-test-split-action@v1
-#        with:
-#          index: ${{ matrix.index }}
-#          total: ${{ matrix.parallel }}
-#          junit-summary: ./junit-test-summary.xml
-#
-#      - name: Install Terraform
-#        uses: hashicorp/setup-terraform@v2
-#        with:
-#          terraform_wrapper: false
-#
-#      - name: Clone the Terraform provider source
-#        run: git clone https://github.com/OctopusDeployLabs/terraform-provider-octopusdeploy.git
-#        shell: bash
-#
-#      - name: Check out the 0.22.0 release branch
-#        run: git checkout release/0.22.0
-#        shell: bash
-#        working-directory: terraform-provider-octopusdeploy
-#
-#      - name: Build the Terraform provider from source
-#        run: go build -o terraform-provider-octopusdeploy
-#        working-directory: terraform-provider-octopusdeploy
-#
-#      - name: Override the location used by Terraform provider
-#        run: |-
-#          cat <<EOT >> ~/.terraformrc
-#          provider_installation {
-#              dev_overrides {
-#              "octopusdeploylabs/octopusdeploy" = "${{ github.workspace }}/terraform-provider-octopusdeploy"
-#            }
-#            direct {}
-#          }
-#          EOT
-#
-#      - name: Go test
-#        shell: bash
-#        env:
-#          LICENSE: ${{ secrets.LICENSE }}
-#          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-#          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-#          AWS_DEFAULT_BUCKET: ${{ secrets.AWS_DEFAULT_BUCKET }}
-#          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
-#          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-#          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-#          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-#          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-#          OCTOTERRAWIZ_AZURE_RESOURCE_GROUP: ${{ secrets.OCTOTERRAWIZ_AZURE_RESOURCE_GROUP }}
-#          OCTOTERRAWIZ_AZURE_STORAGE_ACCOUNT: ${{ secrets.OCTOTERRAWIZ_AZURE_STORAGE_ACCOUNT }}
-#          OCTOTERRAWIZ_AZURE_CONTAINER: ${{ secrets.OCTOTERRAWIZ_AZURE_CONTAINER }}
-#          OCTOTESTSKIPINIT: false
-#          OCTODISABLEOCTOCONTAINERLOGGING: true
-#          OCTOTESTDUMPSTATE: true
-#          OCTOTESTDEFAULTSPACEID: Spaces-2
-#          GOMAXPROCS: 2
-#          OCTOTESTRETRYCOUNT: 5
-#          # This avoids errors like
-#          # Error response from daemon: No such container: d7447146fc04ed2253f9f73644b59ca856c255c603099414e6f50b800719b05b: creating network reaper failed: failed to create network
-#          TESTCONTAINERS_RYUK_DISABLED: true
-#          OCTODISABLEDIND: !!str "N"
-#        run: |
-#          sudo apt install gotestsum
-#          gotestsum --junitfile node-summary.xml --format short-verbose -- -run "${{ steps.test_split.outputs.run }}" -timeout 0 ./...
-#
-#      - name: Upload test artifacts
-#        uses: actions/upload-artifact@v4
-#        with:
-#          name: junit-test-summary-${{ matrix.index }}
-#          path: node-summary.xml
-#          retention-days: 1
-#
-#  tests-combine-summaries:
-#    name: Combine Test Reports
-#    needs: [ tests ]
-#    runs-on: ubuntu-latest
-#    steps:
-#      - name: Checkout code
-#        uses: actions/checkout@v4
-#
-#      - uses: actions/setup-node@v3
-#        with:
-#          node-version: 16
-#
-#      - name: Download artifacts
-#        uses: actions/download-artifact@v4
-#
-#      - name: Install junit-report-merger
-#        run: npm install -g junit-report-merger
-#
-#      - name: Merge reports
-#        run: >
-#          jrm ./junit-test-summary.xml
-#          "junit-test-summary-0/*.xml"
-#          "junit-test-summary-1/*.xml"
-#          "junit-test-summary-2/*.xml"
-#
-#      - name: Upload test artifacts
-#        uses: actions/upload-artifact@v4
-#        with:
-#          name: junit-test-summary
-#          path: ./junit-test-summary.xml
-#
-#      - name: Report
-#        uses: dorny/test-reporter@v1
-#        with:
-#          name: Go Tests
-#          path: junit-test-summary.xml
-#          reporter: java-junit
-#          fail-on-error: 'true'
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22.5'
+
+      - name: Download JUnit Summary from Previous Workflow
+        id: download-artifact
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          workflow_conclusion: success
+          name: junit-test-summary
+          if_no_artifact_found: warn
+          branch: main
+
+      - name: Install Dependencies
+        run: go get ./...
+        shell: bash
+
+      - name: Install Fyne Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get -y install golang gcc libgl1-mesa-dev xorg-dev
+        shell: bash
+
+      - name: Split integration tests
+        id: test_split
+        uses: hashicorp-forge/go-test-split-action@v1
+        with:
+          index: ${{ matrix.index }}
+          total: ${{ matrix.parallel }}
+          junit-summary: ./junit-test-summary.xml
+
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_wrapper: false
+
+      - name: Clone the Terraform provider source
+        run: git clone https://github.com/OctopusDeployLabs/terraform-provider-octopusdeploy.git
+        shell: bash
+
+      - name: Check out the 0.22.0 release branch
+        run: git checkout release/0.22.0
+        shell: bash
+        working-directory: terraform-provider-octopusdeploy
+
+      - name: Build the Terraform provider from source
+        run: go build -o terraform-provider-octopusdeploy
+        working-directory: terraform-provider-octopusdeploy
+
+      - name: Override the location used by Terraform provider
+        run: |-
+          cat <<EOT >> ~/.terraformrc
+          provider_installation {
+              dev_overrides {
+              "octopusdeploylabs/octopusdeploy" = "${{ github.workspace }}/terraform-provider-octopusdeploy"
+            }
+            direct {}
+          }
+          EOT
+
+      - name: Go test
+        shell: bash
+        env:
+          LICENSE: ${{ secrets.LICENSE }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_BUCKET: ${{ secrets.AWS_DEFAULT_BUCKET }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          OCTOTERRAWIZ_AZURE_RESOURCE_GROUP: ${{ secrets.OCTOTERRAWIZ_AZURE_RESOURCE_GROUP }}
+          OCTOTERRAWIZ_AZURE_STORAGE_ACCOUNT: ${{ secrets.OCTOTERRAWIZ_AZURE_STORAGE_ACCOUNT }}
+          OCTOTERRAWIZ_AZURE_CONTAINER: ${{ secrets.OCTOTERRAWIZ_AZURE_CONTAINER }}
+          OCTOTESTSKIPINIT: false
+          OCTODISABLEOCTOCONTAINERLOGGING: true
+          OCTOTESTDUMPSTATE: true
+          OCTOTESTDEFAULTSPACEID: Spaces-2
+          GOMAXPROCS: 2
+          OCTOTESTRETRYCOUNT: 5
+          # This avoids errors like
+          # Error response from daemon: No such container: d7447146fc04ed2253f9f73644b59ca856c255c603099414e6f50b800719b05b: creating network reaper failed: failed to create network
+          TESTCONTAINERS_RYUK_DISABLED: true
+          OCTODISABLEDIND: !!str "N"
+        run: |
+          sudo apt install gotestsum
+          gotestsum --junitfile node-summary.xml --format short-verbose -- -run "${{ steps.test_split.outputs.run }}" -timeout 0 ./...
+
+      - name: Upload test artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-test-summary-${{ matrix.index }}
+          path: node-summary.xml
+          retention-days: 1
+
+  tests-combine-summaries:
+    name: Combine Test Reports
+    needs: [ tests ]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Install junit-report-merger
+        run: npm install -g junit-report-merger
+
+      - name: Merge reports
+        run: >
+          jrm ./junit-test-summary.xml 
+          "junit-test-summary-0/*.xml" 
+          "junit-test-summary-1/*.xml" 
+          "junit-test-summary-2/*.xml"    
+
+      - name: Upload test artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-test-summary
+          path: ./junit-test-summary.xml
+
+      - name: Report
+        uses: dorny/test-reporter@v1
+        with:
+          name: Go Tests
+          path: junit-test-summary.xml
+          reporter: java-junit
+          fail-on-error: 'true'
 
   release:
     runs-on: ubuntu-latest
-#    needs: [ tests ]
+    needs: [ tests ]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
