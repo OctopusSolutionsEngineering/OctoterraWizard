@@ -106,7 +106,7 @@ func (s StartSpaceExportStep) GetContainer(parent fyne.Window) *fyne.Container {
 
 		if err := s.Execute(func(message string) {
 			result.SetText(message)
-		}); err != nil {
+		}, s.environments.Selected); err != nil {
 			if err := logutil.WriteTextToFile("start_space_export_error.txt", err.Error()); err != nil {
 				fmt.Println("Failed to write error to file")
 			}
@@ -135,7 +135,7 @@ func (s StartSpaceExportStep) GetContainer(parent fyne.Window) *fyne.Container {
 	return content
 }
 
-func (s StartSpaceExportStep) Execute(statusCallback func(message string)) (executeError error) {
+func (s StartSpaceExportStep) Execute(statusCallback func(message string), runbookEnvironment string) (executeError error) {
 	doneCh := make(chan bool)
 	statusChan := make(chan string)
 	errorChan := make(chan error)
@@ -152,7 +152,7 @@ func (s StartSpaceExportStep) Execute(statusCallback func(message string)) (exec
 
 		statusChan <- "🔵 Published __ 1. Serialize Space runbook"
 
-		if taskId, err := infrastructure.RunRunbook(s.State, "__ 1. Serialize Space", "Octoterra Space Management", s.environments.Selected); err != nil {
+		if taskId, err := infrastructure.RunRunbook(s.State, "__ 1. Serialize Space", "Octoterra Space Management", runbookEnvironment); err != nil {
 			errorChan <- err
 			return
 		} else {
@@ -171,7 +171,7 @@ func (s StartSpaceExportStep) Execute(statusCallback func(message string)) (exec
 
 		statusChan <- "🔵 Published __ 2. Deploy Space runbook"
 
-		if taskId, err := infrastructure.RunRunbook(s.State, "__ 2. Deploy Space", "Octoterra Space Management", s.environments.Selected); err != nil {
+		if taskId, err := infrastructure.RunRunbook(s.State, "__ 2. Deploy Space", "Octoterra Space Management", runbookEnvironment); err != nil {
 			errorChan <- err
 			return
 		} else {

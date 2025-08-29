@@ -113,7 +113,7 @@ func (s StartProjectExportStep) GetContainer(parent fyne.Window) *fyne.Container
 
 		if err := s.Execute(func(message string) {
 			result.SetText(message)
-		}); err != nil {
+		}, s.environments.Selected); err != nil {
 			if err := logutil.WriteTextToFile("start_project_export_error.txt", err.Error()); err != nil {
 				fmt.Println("Failed to write error to file")
 			}
@@ -135,7 +135,7 @@ func (s StartProjectExportStep) GetContainer(parent fyne.Window) *fyne.Container
 	return content
 }
 
-func (s StartProjectExportStep) Execute(statusCallback func(message string)) error {
+func (s StartProjectExportStep) Execute(statusCallback func(message string), runbookEnvironment string) error {
 	doneCh := make(chan bool)
 	statusChan := make(chan string)
 	errorChan := make(chan error)
@@ -203,8 +203,8 @@ func (s StartProjectExportStep) Execute(statusCallback func(message string)) err
 			return
 		}
 
-		runAndTaskError := s.serializeProjects(regularProjects, statusChan)
-		runAndTaskError = errors.Join(runAndTaskError, s.deployProjects(regularProjects, statusChan))
+		runAndTaskError := s.serializeProjects(regularProjects, runbookEnvironment, statusChan)
+		runAndTaskError = errors.Join(runAndTaskError, s.deployProjects(regularProjects, runbookEnvironment, statusChan))
 
 		/*
 			Now we export projects that have "Deploy a release" steps. This ensures any child projects are available to
@@ -223,8 +223,8 @@ func (s StartProjectExportStep) Execute(statusCallback func(message string)) err
 			Maybe we need to be clever here and try to order these projects more intelligently, but for now we just rely on
 			the retry functionality.
 		*/
-		runAndTaskError = errors.Join(runAndTaskError, s.serializeProjects(deployReleaseProjects, statusChan))
-		runAndTaskError = errors.Join(runAndTaskError, s.deployProjects(deployReleaseProjects, statusChan))
+		runAndTaskError = errors.Join(runAndTaskError, s.serializeProjects(deployReleaseProjects, runbookEnvironment, statusChan))
+		runAndTaskError = errors.Join(runAndTaskError, s.deployProjects(deployReleaseProjects, runbookEnvironment, statusChan))
 
 		errorChan <- runAndTaskError
 	}()
@@ -243,7 +243,7 @@ func (s StartProjectExportStep) Execute(statusCallback func(message string)) err
 	}
 }
 
-func (s StartProjectExportStep) serializeProjects(filteredProjects []*projects.Project, statusChan chan string) error {
+func (s StartProjectExportStep) serializeProjects(filteredProjects []*projects.Project, runbookEnvironment string, statusChan chan string) error {
 	var runAndTaskError error = nil
 
 	for _, project := range filteredProjects {
@@ -257,7 +257,7 @@ func (s StartProjectExportStep) serializeProjects(filteredProjects []*projects.P
 	tasks := []data.NameValuePair{}
 
 	for _, project := range filteredProjects {
-		if taskId, err := infrastructure.RunRunbook(s.State, "__ 1. Serialize Project", project.Name, s.environments.Selected); err != nil {
+		if taskId, err := infrastructure.RunRunbook(s.State, "__ 1. Serialize Project", project.Name, runbookEnvironment); err != nil {
 
 			var failedRunbookRun octoerrors.RunbookRunFailedError
 			if errors.As(err, &failedRunbookRun) {
@@ -284,7 +284,7 @@ func (s StartProjectExportStep) serializeProjects(filteredProjects []*projects.P
 	return runAndTaskError
 }
 
-func (s StartProjectExportStep) deployProjects(filteredProjects []*projects.Project, statusChan chan string) error {
+func (s StartProjectExportStep) deployProjects(filteredProjects []*projects.Project, runbookEnvironment string, statusChan chan string) error {
 	var runAndTaskError error = nil
 
 	for _, project := range filteredProjects {
@@ -296,7 +296,7 @@ func (s StartProjectExportStep) deployProjects(filteredProjects []*projects.Proj
 
 	applyTasks := []data.NameValuePair{}
 	for _, project := range filteredProjects {
-		if taskId, err := infrastructure.RunRunbook(s.State, "__ 2. Deploy Project", project.Name, s.environments.Selected); err != nil {
+		if taskId, err := infrastructure.RunRunbook(s.State, "__ 2. Deploy Project", project.Name, runbookEnvironment); err != nil {
 			var failedRunbookRun octoerrors.RunbookRunFailedError
 			if errors.As(err, &failedRunbookRun) {
 				runAndTaskError = errors.Join(runAndTaskError, errors.Join(errors.New("failed to run runbook \"__ 2. Deploy Project\" in project "+project.Name), failedRunbookRun))

@@ -499,11 +499,11 @@ func TestProjectMigration(t *testing.T) {
 			// status
 		})
 
-		if err := (steps.StartSpaceExportStep{BaseStep: steps.BaseStep{State: state}}).Execute(func(message string) {}); err != nil {
+		if err := (steps.StartSpaceExportStep{BaseStep: steps.BaseStep{State: state}}).Execute(func(message string) {}, "Production"); err != nil {
 			Fatal(t, "Error executing StartSpaceExportStep: %v", err)
 		}
 
-		if err := (steps.StartProjectExportStep{BaseStep: steps.BaseStep{State: state}}).Execute(func(message string) {}); err != nil {
+		if err := (steps.StartProjectExportStep{BaseStep: steps.BaseStep{State: state}}).Execute(func(message string) {}, "Production"); err != nil {
 			Fatal(t, "Error executing StartProjectExportStep: %v", err)
 		}
 
