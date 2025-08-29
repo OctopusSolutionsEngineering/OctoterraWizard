@@ -140,6 +140,14 @@ variable "default_secret_variables" {
   default     = "False"
 }
 
+variable "customise_destination_project_name" {
+  type        = string
+  nullable    = false
+  sensitive   = false
+  description = "Whether to allow the destination project name to be customised or not"
+  default     = "False"
+}
+
 data "octopusdeploy_feeds" "docker_feed" {
   feed_type    = "Docker"
   ids          = null
@@ -162,6 +170,27 @@ data "octopusdeploy_worker_pools" "ubuntu_worker_pool" {
   skip = 0
   take = 1
 }
+
+resource "octopusdeploy_variable" "destination_project_name" {
+  count = lower(var.customise_destination_project_name) == "true" ? 1 : 0
+  owner_id     = var.octopus_project_id
+  value        = "#{Octopus.Project.Name}"
+  name         = "OctoterraWiz.Destination.ProjectName"
+  type         = "String"
+  description  = "Defines the name of the destination project."
+  is_sensitive = false
+
+  prompt {
+    description = "The name of the destination project."
+    label       = "Destination Project Name"
+    is_required = true
+
+    display_settings {
+      control_type = "SingleLineText"
+    }
+  }
+}
+
 
 resource "octopusdeploy_runbook" "runbook" {
   project_id         = var.octopus_project_id
@@ -281,7 +310,7 @@ resource "octopusdeploy_runbook_process" "deploy_project_aws" {
         "OctoterraApply.AWS.S3.BucketName" = var.terraform_state_bucket
         "OctoterraApply.AWS.S3.BucketRegion" =  var.terraform_state_bucket_region
         "OctoterraApply.AWS.Account" = "Terraform.AWS.Account"
-        "OctoterraApply.AWS.S3.BucketKey" = "Project_#{Octopus.Project.Name | Replace \"[^A-Za-z0-9]\" \"_\"}"
+        "OctoterraApply.AWS.S3.BucketKey" = "Project_#{if OctoterraWiz.Destination.ProjectName}#{OctoterraWiz.Destination.ProjectName | Replace \"[^A-Za-z0-9]\" \"_\"}#{/if}#{unless OctoterraWiz.Destination.ProjectName}#{Octopus.Project.Name | Replace \"[^A-Za-z0-9]\" \"_\"}#{/unless}"
         "Octopus.Action.Terraform.Workspace" = "#{OctoterraApply.Terraform.Workspace.Name}"
         "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
         "Octopus.Action.AwsAccount.Variable" = "#{OctoterraApply.AWS.Account}"
@@ -299,7 +328,8 @@ resource "octopusdeploy_runbook_process" "deploy_project_aws" {
         "OctoterraApply.Octopus.ApiKey" = "#{Octopus.Destination.ApiKey}"
         "Octopus.Action.GoogleCloud.ImpersonateServiceAccount" = "False"
         "Octopus.Action.Terraform.GoogleCloudAccount" = "False"
-        "OctoterraApply.Terraform.AdditionalApplyParams" = ""
+        # If a project name is set, infer the terraform variable that defines the project name, and set it to the destination project name.
+        "OctoterraApply.Terraform.AdditionalApplyParams" = "#{if OctoterraWiz.Destination.ProjectName}\"-var=project_#{Octopus.Project.Name | Replace \"[^A-Za-z0-9]\" \"_\" | ToLower}_name=#{OctoterraWiz.Destination.ProjectName}\"#{/if}"
         "Octopus.Action.Terraform.AdditionalActionParams" = "-var=octopus_server=#{OctoterraApply.Octopus.ServerUrl} -var=octopus_apikey=#{OctoterraApply.Octopus.ApiKey} -var=octopus_space_id=#{OctoterraApply.Octopus.SpaceID} #{if OctoterraApply.Terraform.AdditionalApplyParams}#{OctoterraApply.Terraform.AdditionalApplyParams}#{/if}"
         "Octopus.Action.Terraform.FileSubstitution" = "**/project_variable_sensitive*.tf\n**/terraform.tfvars"
         "Octopus.Action.Script.ScriptSource" = "Package"
@@ -387,9 +417,10 @@ resource "octopusdeploy_runbook_process" "deploy_project_azure" {
         "OctoterraApply.Azure.Storage.ResourceGroup"            = var.terraform_state_azure_resource_group
         "OctoterraApply.Azure.Storage.AccountName"              = var.terraform_state_azure_storage_account
         "OctoterraApply.Azure.Storage.Container"                = var.terraform_state_azure_storage_container
-        "OctoterraApply.Azure.Storage.Key"                      = "Project_#{Octopus.Project.Name | Replace \"[^A-Za-z0-9]\" \"_\"}"
+        "OctoterraApply.Azure.Storage.Key"                      = "Project_#{if OctoterraWiz.Destination.ProjectName}#{OctoterraWiz.Destination.ProjectName | Replace \"[^A-Za-z0-9]\" \"_\"}#{/if}#{unless OctoterraWiz.Destination.ProjectName}#{Octopus.Project.Name | Replace \"[^A-Za-z0-9]\" \"_\"}#{/unless}"
         "OctoterraApply.Azure.Account"                          = "Terraform.Azure.Account"
-        "OctoterraApply.Terraform.AdditionalApplyParams"        = ""
+        # If a project name is set, infer the terraform variable that defines the project name, and set it to the destination project name.
+        "OctoterraApply.Terraform.AdditionalApplyParams"        = "#{if OctoterraWiz.Destination.ProjectName}\"-var=project_#{Octopus.Project.Name | Replace \"[^A-Za-z0-9]\" \"_\" | ToLower}_name=#{OctoterraWiz.Destination.ProjectName}\"#{/if}"
         "Octopus.Action.Terraform.AdditionalActionParams"       = "-var=octopus_server=#{OctoterraApply.Octopus.ServerUrl} -var=octopus_apikey=#{OctoterraApply.Octopus.ApiKey} -var=octopus_space_id=#{OctoterraApply.Octopus.SpaceID} #{if OctoterraApply.Terraform.AdditionalApplyParams}#{OctoterraApply.Terraform.AdditionalApplyParams}#{/if}"
         "Octopus.Action.Script.ScriptSource"                    = "Package"
         "Octopus.Action.Terraform.GoogleCloudAccount"           = "False"

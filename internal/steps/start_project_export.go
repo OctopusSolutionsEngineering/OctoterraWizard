@@ -3,12 +3,16 @@ package steps
 import (
 	"errors"
 	"fmt"
+	"net/url"
+	"strings"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/deployments"
+	environments2 "github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/environments"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/projects"
 	"github.com/mcasperson/OctoterraWizard/internal/data"
 	"github.com/mcasperson/OctoterraWizard/internal/infrastructure"
@@ -18,14 +22,13 @@ import (
 	"github.com/mcasperson/OctoterraWizard/internal/strutil"
 	"github.com/mcasperson/OctoterraWizard/internal/wizard"
 	"github.com/samber/lo"
-	"net/url"
-	"strings"
 )
 
 type StartProjectExportStep struct {
 	BaseStep
 	Wizard         wizard.Wizard
 	exportProjects *widget.Button
+	environments   *widget.Select
 	logs           *widget.Entry
 	exportDone     bool
 }
@@ -63,6 +66,22 @@ func (s StartProjectExportStep) GetContainer(parent fyne.Window) *fyne.Container
 	s.logs.Hide()
 	s.logs.MultiLine = true
 	s.exportDone = false
+
+	environments, err := infrastructure.GetEnvironments(s.State)
+	environmentNames := []string{}
+	if err == nil {
+		environmentNames = lo.Map(environments, func(item *environments2.Environment, index int) string {
+			return item.Name
+		})
+	}
+
+	environmentsLabel := widget.NewLabel("Runbook Execution Environment")
+	s.environments = widget.NewSelect(environmentNames, func(selected string) {})
+	if len(environmentNames) > 0 {
+		s.environments.SetSelected(environmentNames[0])
+	}
+
+	environmentContainer := container.New(layout.NewHBoxLayout(), environmentsLabel, s.environments)
 
 	heading := widget.NewLabel("Migrate Projects")
 	heading.TextStyle = fyne.TextStyle{Bold: true}
@@ -109,7 +128,7 @@ func (s StartProjectExportStep) GetContainer(parent fyne.Window) *fyne.Container
 			s.logs.Hide()
 		}
 	})
-	middle := container.New(layout.NewVBoxLayout(), heading, label1, s.exportProjects, infinite, result, link, s.logs)
+	middle := container.New(layout.NewVBoxLayout(), heading, label1, environmentContainer, s.exportProjects, infinite, result, link, s.logs)
 
 	content := container.NewBorder(nil, bottom, nil, nil, middle)
 
@@ -117,88 +136,114 @@ func (s StartProjectExportStep) GetContainer(parent fyne.Window) *fyne.Container
 }
 
 func (s StartProjectExportStep) Execute(statusCallback func(message string)) error {
-	myclient, err := octoclient.CreateClient(s.State)
+	doneCh := make(chan bool)
+	statusChan := make(chan string)
+	errorChan := make(chan error)
 
-	if err != nil {
-		return errors.Join(errors.New("failed to create client"), err)
-	}
+	go func() {
+		defer func() {
+			doneCh <- true
+		}()
 
-	filteredProjects, err := infrastructure.GetProjects(myclient)
+		myclient, err := octoclient.CreateClient(s.State)
 
-	if err != nil {
-		return errors.Join(errors.New("failed to get all projects"), err)
-	}
+		if err != nil {
+			errorChan <- errors.Join(errors.New("failed to create client"), err)
+			return
+		}
 
-	// We start by exporting projects that do not have "Deploy a release" steps
-	var filterErrors error = nil
-	regularProjects := lo.Filter(filteredProjects, func(project *projects.Project, index int) bool {
+		filteredProjects, err := infrastructure.GetProjects(myclient)
 
-		var process *deployments.DeploymentProcess = nil
+		if err != nil {
+			errorChan <- errors.Join(errors.New("failed to get all projects"), err)
+			return
+		}
 
-		if project.IsVersionControlled {
-			if gitPersistence, ok := project.PersistenceSettings.(projects.GitPersistenceSettings); ok {
+		// We start by exporting projects that do not have "Deploy a release" steps
+		var filterErrors error = nil
+		regularProjects := lo.Filter(filteredProjects, func(project *projects.Project, index int) bool {
 
-				process, err = deployments.GetDeploymentProcessByGitRef(myclient, myclient.GetSpaceID(), project, "refs/heads/"+gitPersistence.DefaultBranch())
+			var process *deployments.DeploymentProcess = nil
+
+			if project.IsVersionControlled {
+				if gitPersistence, ok := project.PersistenceSettings.(projects.GitPersistenceSettings); ok {
+
+					process, err = deployments.GetDeploymentProcessByGitRef(myclient, myclient.GetSpaceID(), project, "refs/heads/"+gitPersistence.DefaultBranch())
+
+					if err != nil {
+						// "bad packet length" has been seen on projects with invalid git configuration, so we just ignore it
+						if strings.Index(err.Error(), "bad packet length") == -1 {
+							filterErrors = errors.Join(filterErrors, errors.Join(errors.New("failed to get deployment process by gitref \"refs/heads/"+gitPersistence.DefaultBranch()+"\" for project "+project.Name), err))
+						}
+						return false
+					}
+				}
+			} else {
+				process, err = deployments.GetDeploymentProcessByID(myclient, myclient.GetSpaceID(), project.DeploymentProcessID)
 
 				if err != nil {
-					// "bad packet length" has been seen on projects with invalid git configuration, so we just ignore it
-					if strings.Index(err.Error(), "bad packet length") == -1 {
-						filterErrors = errors.Join(filterErrors, errors.Join(errors.New("failed to get deployment process by gitref \"refs/heads/"+gitPersistence.DefaultBranch()+"\" for project "+project.Name), err))
-					}
+					filterErrors = errors.Join(filterErrors, errors.Join(errors.New("failed to get deployment process by ID "+project.DeploymentProcessID+" for project "+project.Name), err))
 					return false
 				}
 			}
-		} else {
-			process, err = deployments.GetDeploymentProcessByID(myclient, myclient.GetSpaceID(), project.DeploymentProcessID)
 
-			if err != nil {
-				filterErrors = errors.Join(filterErrors, errors.Join(errors.New("failed to get deployment process by ID "+project.DeploymentProcessID+" for project "+project.Name), err))
+			if process == nil {
 				return false
 			}
-		}
 
-		if process == nil {
-			return false
-		}
-
-		return !lo.ContainsBy(process.Steps, func(step *deployments.DeploymentStep) bool {
-			return lo.ContainsBy(step.Actions, func(action *deployments.DeploymentAction) bool {
-				return action.ActionType == "Octopus.DeployRelease"
+			return !lo.ContainsBy(process.Steps, func(step *deployments.DeploymentStep) bool {
+				return lo.ContainsBy(step.Actions, func(action *deployments.DeploymentAction) bool {
+					return action.ActionType == "Octopus.DeployRelease"
+				})
 			})
 		})
-	})
 
-	if filterErrors != nil {
-		return filterErrors
-	}
+		if filterErrors != nil {
+			errorChan <- filterErrors
+			return
+		}
 
-	runAndTaskError := s.serializeProjects(regularProjects, statusCallback)
-	runAndTaskError = errors.Join(runAndTaskError, s.deployProjects(regularProjects, statusCallback))
+		runAndTaskError := s.serializeProjects(regularProjects, statusChan)
+		runAndTaskError = errors.Join(runAndTaskError, s.deployProjects(regularProjects, statusChan))
 
-	/*
-		Now we export projects that have "Deploy a release" steps. This ensures any child projects are available to
-		be queried via a data source in the Terraform module.
-	*/
-	deployReleaseProjects := lo.Filter(filteredProjects, func(project *projects.Project, index int) bool {
-		return !lo.ContainsBy(regularProjects, func(regularProject *projects.Project) bool {
-			return project.ID == regularProject.ID
+		/*
+			Now we export projects that have "Deploy a release" steps. This ensures any child projects are available to
+			be queried via a data source in the Terraform module.
+		*/
+		deployReleaseProjects := lo.Filter(filteredProjects, func(project *projects.Project, index int) bool {
+			return !lo.ContainsBy(regularProjects, func(regularProject *projects.Project) bool {
+				return project.ID == regularProject.ID
+			})
 		})
-	})
 
-	/*
-		It is possible that a project has a "Deploy a release" step but also has a "Deploy a release" step in a child project.
-		So there is a deeper level of dependencies here. However, we rely on the step retry functionality in Octopus to
-		allow the "top level" project to be exported first, and then the child project to be exported later.
-		Maybe we need to be clever here and try to order these projects more intelligently, but for now we just rely on
-		the retry functionality.
-	*/
-	runAndTaskError = errors.Join(runAndTaskError, s.serializeProjects(deployReleaseProjects, statusCallback))
-	runAndTaskError = errors.Join(runAndTaskError, s.deployProjects(deployReleaseProjects, statusCallback))
+		/*
+			It is possible that a project has a "Deploy a release" step but also has a "Deploy a release" step in a child project.
+			So there is a deeper level of dependencies here. However, we rely on the step retry functionality in Octopus to
+			allow the "top level" project to be exported first, and then the child project to be exported later.
+			Maybe we need to be clever here and try to order these projects more intelligently, but for now we just rely on
+			the retry functionality.
+		*/
+		runAndTaskError = errors.Join(runAndTaskError, s.serializeProjects(deployReleaseProjects, statusChan))
+		runAndTaskError = errors.Join(runAndTaskError, s.deployProjects(deployReleaseProjects, statusChan))
 
-	return runAndTaskError
+		errorChan <- runAndTaskError
+	}()
+
+	for {
+		select {
+		case <-doneCh:
+			return nil
+
+		case errorMessage := <-errorChan:
+			return errorMessage
+
+		case status := <-statusChan:
+			statusCallback(status)
+		}
+	}
 }
 
-func (s StartProjectExportStep) serializeProjects(filteredProjects []*projects.Project, statusCallback func(message string)) error {
+func (s StartProjectExportStep) serializeProjects(filteredProjects []*projects.Project, statusChan chan string) error {
 	var runAndTaskError error = nil
 
 	for _, project := range filteredProjects {
@@ -206,13 +251,13 @@ func (s StartProjectExportStep) serializeProjects(filteredProjects []*projects.P
 			return errors.Join(errors.New("failed to publish runbook \"__ 1. Serialize Project\" for project "+project.Name), err)
 		}
 
-		statusCallback("🔵 Published __ 1. Serialize Project runbook in project " + project.Name)
+		statusChan <- "🔵 Published __ 1. Serialize Project runbook in project " + project.Name
 	}
 
 	tasks := []data.NameValuePair{}
 
 	for _, project := range filteredProjects {
-		if taskId, err := infrastructure.RunRunbook(s.State, "__ 1. Serialize Project", project.Name); err != nil {
+		if taskId, err := infrastructure.RunRunbook(s.State, "__ 1. Serialize Project", project.Name, s.environments.Selected); err != nil {
 
 			var failedRunbookRun octoerrors.RunbookRunFailedError
 			if errors.As(err, &failedRunbookRun) {
@@ -226,10 +271,10 @@ func (s StartProjectExportStep) serializeProjects(filteredProjects []*projects.P
 	}
 
 	serializeIndex := 0
-	statusCallback("🔵 Started running the __ 1. Serialize Project runbooks (" + fmt.Sprint(serializeIndex) + "/" + fmt.Sprint(len(tasks)) + ")")
+	statusChan <- "🔵 Started running the __ 1. Serialize Project runbooks (" + fmt.Sprint(serializeIndex) + "/" + fmt.Sprint(len(tasks)) + ")"
 	for _, task := range tasks {
 		if err := infrastructure.WaitForTask(s.State, task.Value, func(message string) {
-			statusCallback("🔵 __ 1. Serialize Project for project " + task.Name + " is " + message + " (" + fmt.Sprint(serializeIndex) + "/" + fmt.Sprint(len(tasks)) + ")")
+			statusChan <- "🔵 __ 1. Serialize Project for project " + task.Name + " is " + message + " (" + fmt.Sprint(serializeIndex) + "/" + fmt.Sprint(len(tasks)) + ")"
 		}); err != nil {
 			runAndTaskError = errors.Join(runAndTaskError, errors.Join(errors.New("failed to get task state for task "+task.Name), err))
 		}
@@ -239,19 +284,19 @@ func (s StartProjectExportStep) serializeProjects(filteredProjects []*projects.P
 	return runAndTaskError
 }
 
-func (s StartProjectExportStep) deployProjects(filteredProjects []*projects.Project, statusCallback func(message string)) error {
+func (s StartProjectExportStep) deployProjects(filteredProjects []*projects.Project, statusChan chan string) error {
 	var runAndTaskError error = nil
 
 	for _, project := range filteredProjects {
 		if err := infrastructure.PublishRunbook(s.State, "__ 2. Deploy Project", project.Name); err != nil {
 			return errors.Join(errors.New("failed to publish runbook \"__ 2. Deploy Project\" for project "+project.Name), err)
 		}
-		statusCallback("🔵 Published __ 2. Deploy Space runbook in project " + project.Name)
+		statusChan <- "🔵 Published __ 2. Deploy Space runbook in project " + project.Name
 	}
 
 	applyTasks := []data.NameValuePair{}
 	for _, project := range filteredProjects {
-		if taskId, err := infrastructure.RunRunbook(s.State, "__ 2. Deploy Project", project.Name); err != nil {
+		if taskId, err := infrastructure.RunRunbook(s.State, "__ 2. Deploy Project", project.Name, s.environments.Selected); err != nil {
 			var failedRunbookRun octoerrors.RunbookRunFailedError
 			if errors.As(err, &failedRunbookRun) {
 				runAndTaskError = errors.Join(runAndTaskError, errors.Join(errors.New("failed to run runbook \"__ 2. Deploy Project\" in project "+project.Name), failedRunbookRun))
@@ -264,10 +309,10 @@ func (s StartProjectExportStep) deployProjects(filteredProjects []*projects.Proj
 	}
 
 	applyIndex := 0
-	statusCallback("🔵 Started running the __ 2. Deploy Project runbooks (" + fmt.Sprint(applyIndex) + "/" + fmt.Sprint(len(applyTasks)) + ")")
+	statusChan <- "🔵 Started running the __ 2. Deploy Project runbooks (" + fmt.Sprint(applyIndex) + "/" + fmt.Sprint(len(applyTasks)) + ")"
 	for _, task := range applyTasks {
 		if err := infrastructure.WaitForTask(s.State, task.Value, func(message string) {
-			statusCallback("🔵 __ 2. Deploy Project for project " + task.Name + " is " + message + " (" + fmt.Sprint(applyIndex) + "/" + fmt.Sprint(len(applyTasks)) + ")")
+			statusChan <- "🔵 __ 2. Deploy Project for project " + task.Name + " is " + message + " (" + fmt.Sprint(applyIndex) + "/" + fmt.Sprint(len(applyTasks)) + ")"
 		}); err != nil {
 			runAndTaskError = errors.Join(runAndTaskError, errors.Join(errors.New("failed to get task state for task "+task.Name), err))
 		}

@@ -393,6 +393,18 @@ func TestProjectMigration(t *testing.T) {
 			return err
 		}
 
+		testBucket := os.Getenv("OCTOTERRAWIZ_TEST_AWS_BUCKET")
+
+		if testBucket == "" {
+			testBucket = os.Getenv("AWS_DEFAULT_BUCKET")
+		}
+
+		testBucketRegion := os.Getenv("OCTOTERRAWIZ_TEST_AWS_DEFAULT_REGION")
+
+		if testBucketRegion == "" {
+			testBucketRegion = os.Getenv("AWS_DEFAULT_REGION")
+		}
+
 		state := state.State{
 			BackendType:                   "AWS S3",
 			Server:                        "http://localhost:8080", // The address used by Octopus when running tasks, which could be in nested containers
@@ -405,8 +417,8 @@ func TestProjectMigration(t *testing.T) {
 			DestinationSpace:              space.ID,
 			AwsAccessKey:                  os.Getenv("AWS_ACCESS_KEY_ID"),
 			AwsSecretKey:                  os.Getenv("AWS_SECRET_ACCESS_KEY"),
-			AwsS3Bucket:                   os.Getenv("AWS_DEFAULT_BUCKET"),
-			AwsS3BucketRegion:             os.Getenv("AWS_DEFAULT_REGION"),
+			AwsS3Bucket:                   testBucket,
+			AwsS3BucketRegion:             testBucketRegion,
 			PromptForDelete:               false,
 			UseContainerImages:            false,
 			AzureResourceGroupName:        "",

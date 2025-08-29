@@ -246,5 +246,6 @@ func (s AzureTerraformStateStep) getState() state.State {
 		DatabasePort:              s.State.DatabasePort,
 		DatabaseName:              s.State.DatabaseName,
 		DatabaseMasterKey:         s.State.DatabaseMasterKey,
+		EnableProjectRenaming:     s.State.EnableProjectRenaming,
 	}
 }

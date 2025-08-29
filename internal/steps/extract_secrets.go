@@ -215,6 +215,7 @@ func (s ExtractSecrets) getState() state.State {
 		DatabasePort:                  strings.TrimSpace(s.port.Text),
 		DatabaseName:                  strings.TrimSpace(s.database.Text),
 		DatabaseMasterKey:             strings.TrimSpace(s.masterKey.Text),
+		EnableProjectRenaming:         s.State.EnableProjectRenaming,
 	}
 }
 
