@@ -2,7 +2,17 @@ package main
 
 import (
 	"bytes"
+	"crypto/rand"
 	"encoding/json"
+	"io"
+	"math/big"
+	"net/http"
+	"os"
+	"path/filepath"
+	"regexp"
+	"strings"
+	"testing"
+
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/client"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/projects"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/tasks"
@@ -13,13 +23,6 @@ import (
 	"github.com/mcasperson/OctoterraWizard/internal/state"
 	"github.com/mcasperson/OctoterraWizard/internal/steps"
 	"github.com/samber/lo"
-	"io"
-	"net/http"
-	"os"
-	"path/filepath"
-	"regexp"
-	"strings"
-	"testing"
 )
 
 func TestSpreadVariables(t *testing.T) {
@@ -369,6 +372,12 @@ func TestProjectSpreadVariables(t *testing.T) {
 // TestProjectMigration tests a full space migration running the wizard steps in the same sequence
 // a user would from the UI
 func TestProjectMigration(t *testing.T) {
+	projectName, err := GenerateRandomString(10)
+
+	if err != nil {
+		t.Fatalf("Error generating random string: %v", err)
+	}
+
 	testFramework := test.OctopusContainerTest{}
 	testFramework.ArrangeTest(t, func(t *testing.T, container *test.OctopusContainer, client *client.Client) error {
 		// Act
@@ -377,7 +386,9 @@ func TestProjectMigration(t *testing.T) {
 			container,
 			filepath.Join("terraform"),
 			"3-simpleproject",
-			[]string{})
+			[]string{
+				"-var=project_name=" + projectName,
+			})
 
 		if err != nil {
 			return err
@@ -528,7 +539,7 @@ func TestProjectMigration(t *testing.T) {
 			return err
 		}
 
-		project, err := projects.GetByName(migratedSpaceClient, migratedSpaceClient.GetSpaceID(), "Test")
+		project, err := projects.GetByName(migratedSpaceClient, migratedSpaceClient.GetSpaceID(), projectName)
 
 		if err != nil {
 			return err
@@ -557,4 +568,18 @@ func Fatal(t *testing.T, message string, err error) {
 type task struct {
 	Name        string `json:"Name"`
 	Description string `json:"Description"`
+}
+
+const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
+func GenerateRandomString(length int) (string, error) {
+	result := make([]byte, length)
+	for i := range result {
+		num, err := rand.Int(rand.Reader, big.NewInt(int64(len(charset))))
+		if err != nil {
+			return "", err
+		}
+		result[i] = charset[num.Int64()]
+	}
+	return string(result), nil
 }
