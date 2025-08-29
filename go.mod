@@ -10,14 +10,14 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources v1.2.0
 	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.4.0
 	github.com/OctopusDeploy/go-octopusdeploy/v2 v2.78.1-0.20250804222835-82d998586c96
-	github.com/OctopusSolutionsEngineering/OctopusTerraformTestFramework v1.0.2-0.20250804045951-911b2e97d07f
+	github.com/OctopusSolutionsEngineering/OctopusTerraformTestFramework v1.0.2-0.20250829054039-8ce19e8cf397
 	github.com/aws/aws-sdk-go-v2 v1.32.3
 	github.com/aws/aws-sdk-go-v2/config v1.28.1
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.66.2
 	github.com/aws/aws-sdk-go-v2/service/sts v1.32.3
 	github.com/aws/smithy-go v1.22.0
 	github.com/microsoft/go-mssqldb v1.8.0
-	github.com/samber/lo v1.47.0
+	github.com/samber/lo v1.51.0
 )
 
 require (
