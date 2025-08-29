@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/client"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/projects"
-	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/spaces"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/tasks"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/variables"
 	"github.com/OctopusSolutionsEngineering/OctopusTerraformTestFramework/octoclient"
@@ -386,10 +385,6 @@ func TestProjectMigration(t *testing.T) {
 
 		newSpaceClient, err := octoclient.CreateClient(container.URI, newSpaceId, test.ApiKey)
 
-		newSpace := spaces.NewSpace("Migration")
-		newSpace.SpaceManagersTeams = []string{"teams-administrators"}
-		space, err := newSpaceClient.Spaces.Add(newSpace)
-
 		if err != nil {
 			return err
 		}
@@ -415,7 +410,7 @@ func TestProjectMigration(t *testing.T) {
 			DestinationServer:             "http://localhost:8080",
 			DestinationServerExternal:     container.URI,
 			DestinationApiKey:             test.ApiKey,
-			DestinationSpace:              space.ID,
+			DestinationSpace:              "Spaces-1",
 			AwsAccessKey:                  os.Getenv("AWS_ACCESS_KEY_ID"),
 			AwsSecretKey:                  os.Getenv("AWS_SECRET_ACCESS_KEY"),
 			AwsS3Bucket:                   testBucket,
@@ -527,7 +522,7 @@ func TestProjectMigration(t *testing.T) {
 			Fatal(t, "Error executing StartProjectExportStep: %v", err)
 		}
 
-		migratedSpaceClient, err := octoclient.CreateClient(container.URI, space.ID, test.ApiKey)
+		migratedSpaceClient, err := octoclient.CreateClient(container.URI, "Spaces-1", test.ApiKey)
 
 		if err != nil {
 			return err
