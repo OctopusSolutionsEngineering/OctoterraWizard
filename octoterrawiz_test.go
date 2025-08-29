@@ -529,9 +529,11 @@ func TestProjectMigration(t *testing.T) {
 
 func Fatal(t *testing.T, message string, err error) {
 	if uw, ok := err.(interface{ Unwrap() []error }); ok {
+		parts := []string{}
 		for _, e := range uw.Unwrap() {
-			t.Fatalf(message, e)
+			parts = append(parts, e.Error())
 		}
+		t.Fatalf(message+" "+strings.Join(parts, "; "), err)
 	} else {
 		t.Fatalf(message, err)
 	}
