@@ -91,6 +91,8 @@ func (s StartSpaceExportStep) GetContainer(parent fyne.Window) *fyne.Container {
 		s.environments.SetSelected(environmentNames[0])
 	}
 
+	environmentContainer := container.New(layout.NewHBoxLayout(), environmentsLabel, s.environments)
+
 	s.exportSpace = widget.NewButton("Export Space", func() {
 		s.exportDone = true
 		s.exportSpace.Disable()
@@ -126,7 +128,7 @@ func (s StartSpaceExportStep) GetContainer(parent fyne.Window) *fyne.Container {
 			s.exportSpace.Enable()
 		}
 	})
-	middle := container.New(layout.NewVBoxLayout(), heading, label1, environmentsLabel, s.environments, s.exportSpace, infinite, result, link, s.logs)
+	middle := container.New(layout.NewVBoxLayout(), heading, label1, environmentContainer, s.exportSpace, infinite, result, link, s.logs)
 
 	content := container.NewBorder(nil, bottom, nil, nil, middle)
 

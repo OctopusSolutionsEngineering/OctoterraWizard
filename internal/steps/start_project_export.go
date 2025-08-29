@@ -81,6 +81,8 @@ func (s StartProjectExportStep) GetContainer(parent fyne.Window) *fyne.Container
 		s.environments.SetSelected(environmentNames[0])
 	}
 
+	environmentContainer := container.New(layout.NewHBoxLayout(), environmentsLabel, s.environments)
+
 	heading := widget.NewLabel("Migrate Projects")
 	heading.TextStyle = fyne.TextStyle{Bold: true}
 
@@ -126,7 +128,7 @@ func (s StartProjectExportStep) GetContainer(parent fyne.Window) *fyne.Container
 			s.logs.Hide()
 		}
 	})
-	middle := container.New(layout.NewVBoxLayout(), heading, label1, environmentsLabel, s.environments, s.exportProjects, infinite, result, link, s.logs)
+	middle := container.New(layout.NewVBoxLayout(), heading, label1, environmentContainer, s.exportProjects, infinite, result, link, s.logs)
 
 	content := container.NewBorder(nil, bottom, nil, nil, middle)
 
