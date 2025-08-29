@@ -85,6 +85,7 @@ func (s StartSpaceExportStep) GetContainer(parent fyne.Window) *fyne.Container {
 		})
 	}
 
+	environmentsLabel := widget.NewLabel("Runbook Execution Environment")
 	s.environments = widget.NewSelect(environmentNames, func(selected string) {})
 	if len(environmentNames) > 0 {
 		s.environments.SetSelected(environmentNames[0])
@@ -125,7 +126,7 @@ func (s StartSpaceExportStep) GetContainer(parent fyne.Window) *fyne.Container {
 			s.exportSpace.Enable()
 		}
 	})
-	middle := container.New(layout.NewVBoxLayout(), heading, label1, s.environments, s.exportSpace, infinite, result, link, s.logs)
+	middle := container.New(layout.NewVBoxLayout(), heading, label1, environmentsLabel, s.environments, s.exportSpace, infinite, result, link, s.logs)
 
 	content := container.NewBorder(nil, bottom, nil, nil, middle)
 
