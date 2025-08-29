@@ -10,18 +10,21 @@ import (
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
+	environments2 "github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/environments"
 	"github.com/mcasperson/OctoterraWizard/internal/infrastructure"
 	"github.com/mcasperson/OctoterraWizard/internal/logutil"
 	"github.com/mcasperson/OctoterraWizard/internal/strutil"
 	"github.com/mcasperson/OctoterraWizard/internal/wizard"
+	"github.com/samber/lo"
 )
 
 type StartSpaceExportStep struct {
 	BaseStep
-	Wizard      wizard.Wizard
-	exportSpace *widget.Button
-	logs        *widget.Entry
-	exportDone  bool
+	Wizard       wizard.Wizard
+	exportSpace  *widget.Button
+	logs         *widget.Entry
+	environments *widget.Select
+	exportDone   bool
 }
 
 func (s StartSpaceExportStep) GetContainer(parent fyne.Window) *fyne.Container {
@@ -74,6 +77,19 @@ func (s StartSpaceExportStep) GetContainer(parent fyne.Window) *fyne.Container {
 	s.logs.MultiLine = true
 	s.exportDone = false
 
+	environments, err := infrastructure.GetEnvironments(s.State)
+	environmentNames := []string{}
+	if err == nil {
+		environmentNames = lo.Map(environments, func(item *environments2.Environment, index int) string {
+			return item.Name
+		})
+	}
+
+	s.environments = widget.NewSelect(environmentNames, func(selected string) {})
+	if len(environmentNames) > 0 {
+		s.environments.SetSelected(environmentNames[0])
+	}
+
 	s.exportSpace = widget.NewButton("Export Space", func() {
 		s.exportDone = true
 		s.exportSpace.Disable()
@@ -109,7 +125,7 @@ func (s StartSpaceExportStep) GetContainer(parent fyne.Window) *fyne.Container {
 			s.exportSpace.Enable()
 		}
 	})
-	middle := container.New(layout.NewVBoxLayout(), heading, label1, s.exportSpace, infinite, result, link, s.logs)
+	middle := container.New(layout.NewVBoxLayout(), heading, label1, s.environments, s.exportSpace, infinite, result, link, s.logs)
 
 	content := container.NewBorder(nil, bottom, nil, nil, middle)
 
@@ -133,7 +149,7 @@ func (s StartSpaceExportStep) Execute(parent fyne.Window, statusCallback func(me
 
 		statusChan <- "🔵 Published __ 1. Serialize Space runbook"
 
-		if taskId, err := infrastructure.RunRunbook(s.State, "__ 1. Serialize Space", "Octoterra Space Management"); err != nil {
+		if taskId, err := infrastructure.RunRunbook(s.State, "__ 1. Serialize Space", "Octoterra Space Management", s.environments.Selected); err != nil {
 			errorChan <- err
 			return
 		} else {
@@ -152,7 +168,7 @@ func (s StartSpaceExportStep) Execute(parent fyne.Window, statusCallback func(me
 
 		statusChan <- "🔵 Published __ 2. Deploy Space runbook"
 
-		if taskId, err := infrastructure.RunRunbook(s.State, "__ 2. Deploy Space", "Octoterra Space Management"); err != nil {
+		if taskId, err := infrastructure.RunRunbook(s.State, "__ 2. Deploy Space", "Octoterra Space Management", s.environments.Selected); err != nil {
 			errorChan <- err
 			return
 		} else {

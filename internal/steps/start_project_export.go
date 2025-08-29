@@ -12,6 +12,7 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/deployments"
+	environments2 "github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/environments"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/projects"
 	"github.com/mcasperson/OctoterraWizard/internal/data"
 	"github.com/mcasperson/OctoterraWizard/internal/infrastructure"
@@ -27,6 +28,7 @@ type StartProjectExportStep struct {
 	BaseStep
 	Wizard         wizard.Wizard
 	exportProjects *widget.Button
+	environments   *widget.Select
 	logs           *widget.Entry
 	exportDone     bool
 }
@@ -64,6 +66,19 @@ func (s StartProjectExportStep) GetContainer(parent fyne.Window) *fyne.Container
 	s.logs.Hide()
 	s.logs.MultiLine = true
 	s.exportDone = false
+
+	environments, err := infrastructure.GetEnvironments(s.State)
+	environmentNames := []string{}
+	if err == nil {
+		environmentNames = lo.Map(environments, func(item *environments2.Environment, index int) string {
+			return item.Name
+		})
+	}
+
+	s.environments = widget.NewSelect(environmentNames, func(selected string) {})
+	if len(environmentNames) > 0 {
+		s.environments.SetSelected(environmentNames[0])
+	}
 
 	heading := widget.NewLabel("Migrate Projects")
 	heading.TextStyle = fyne.TextStyle{Bold: true}
@@ -110,7 +125,7 @@ func (s StartProjectExportStep) GetContainer(parent fyne.Window) *fyne.Container
 			s.logs.Hide()
 		}
 	})
-	middle := container.New(layout.NewVBoxLayout(), heading, label1, s.exportProjects, infinite, result, link, s.logs)
+	middle := container.New(layout.NewVBoxLayout(), heading, label1, s.environments, s.exportProjects, infinite, result, link, s.logs)
 
 	content := container.NewBorder(nil, bottom, nil, nil, middle)
 
@@ -239,7 +254,7 @@ func (s StartProjectExportStep) serializeProjects(filteredProjects []*projects.P
 	tasks := []data.NameValuePair{}
 
 	for _, project := range filteredProjects {
-		if taskId, err := infrastructure.RunRunbook(s.State, "__ 1. Serialize Project", project.Name); err != nil {
+		if taskId, err := infrastructure.RunRunbook(s.State, "__ 1. Serialize Project", project.Name, s.environments.Selected); err != nil {
 
 			var failedRunbookRun octoerrors.RunbookRunFailedError
 			if errors.As(err, &failedRunbookRun) {
@@ -278,7 +293,7 @@ func (s StartProjectExportStep) deployProjects(filteredProjects []*projects.Proj
 
 	applyTasks := []data.NameValuePair{}
 	for _, project := range filteredProjects {
-		if taskId, err := infrastructure.RunRunbook(s.State, "__ 2. Deploy Project", project.Name); err != nil {
+		if taskId, err := infrastructure.RunRunbook(s.State, "__ 2. Deploy Project", project.Name, s.environments.Selected); err != nil {
 			var failedRunbookRun octoerrors.RunbookRunFailedError
 			if errors.As(err, &failedRunbookRun) {
 				runAndTaskError = errors.Join(runAndTaskError, errors.Join(errors.New("failed to run runbook \"__ 2. Deploy Project\" in project "+project.Name), failedRunbookRun))
