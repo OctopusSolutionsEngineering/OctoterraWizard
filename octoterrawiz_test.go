@@ -6,6 +6,7 @@ import (
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/client"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/projects"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/spaces"
+	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/tasks"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/variables"
 	"github.com/OctopusSolutionsEngineering/OctopusTerraformTestFramework/octoclient"
 	"github.com/OctopusSolutionsEngineering/OctopusTerraformTestFramework/test"
@@ -441,6 +442,25 @@ func TestProjectMigration(t *testing.T) {
 			DatabaseMasterKey: "",
 		}
 
+		libraryReq, err := newSpaceClient.
+			Sling().
+			Post("/api/tasks").
+			BodyJSON(task{
+				Name:        "SyncCommunityActionTemplates",
+				Description: "Synchronize Community Step Templates",
+			}).
+			Request()
+
+		if err != nil {
+			return err
+		}
+
+		task := tasks.Task{}
+		_, err = newSpaceClient.Sling().Do(libraryReq, &task, nil)
+		if err != nil {
+			return err
+		}
+
 		// need to install pip and terraform onto the Octopus container
 		installPip := "{\"Name\":\"AdHocScript\",\"Description\":\"Script run from management console\",\"Arguments\":{\"MachineIds\":[],\"TenantIds\":[],\"TargetRoles\":[],\"EnvironmentIds\":[],\"WorkerIds\":[],\"WorkerPoolIds\":[],\"TargetType\":\"OctopusServer\",\"Syntax\":\"Bash\",\"ScriptBody\":\"apt-get update && apt-get install -y gnupg software-properties-common\\nwget -O- https://apt.releases.hashicorp.com/gpg | \\\\\\ngpg --dearmor | \\\\\\ntee /usr/share/keyrings/hashicorp-archive-keyring.gpg > /dev/null\\necho \\\"deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] \\\\\\nhttps://apt.releases.hashicorp.com $(lsb_release -cs) main\\\" | \\\\\\ntee /etc/apt/sources.list.d/hashicorp.list\\napt update\\napt-get install -y terraform\\n\\ncurl -L -o /usr/bin/octoterra https://github.com/OctopusSolutionsEngineering/OctopusTerraformExport/releases/latest/download/octoterra_linux_amd64\\nchmod +x /usr/bin/octoterra\\n\\ncurl -L -o octopustools.tar.gz https://download.octopusdeploy.com/octopus-tools/9.0.0/OctopusTools.9.0.0.linux-x64.tar.gz\\ntar -xzf octopustools.tar.gz\\nchmod +x octo\\nmv octo /usr/bin/octo\\n\\napt-get update\\napt-get upgrade -y\\napt install python3-pip -y\"},\"SpaceId\":\"Spaces-1\"}"
 		req, err := http.NewRequest("POST", container.URI+"/api/tasks", bytes.NewReader([]byte(installPip)))
@@ -537,4 +557,9 @@ func Fatal(t *testing.T, message string, err error) {
 	} else {
 		t.Fatalf(message, err)
 	}
+}
+
+type task struct {
+	Name        string `json:"Name"`
+	Description string `json:"Description"`
 }
