@@ -13,7 +13,7 @@ name: Go Build
 jobs:
   tests:
     name: Test
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
@@ -105,6 +105,7 @@ jobs:
           # Error response from daemon: No such container: d7447146fc04ed2253f9f73644b59ca856c255c603099414e6f50b800719b05b: creating network reaper failed: failed to create network
           TESTCONTAINERS_RYUK_DISABLED: true
           OCTODISABLEDIND: !!str "N"
+          OCTO_MSSQLTAG: 2025-latest
         run: |
           sudo apt install gotestsum
           gotestsum --junitfile node-summary.xml --format short-verbose -- -run "${{ steps.test_split.outputs.run }}" -timeout 0 ./...
