@@ -9,8 +9,8 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.8.0
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources v1.2.0
 	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.4.0
-	github.com/OctopusDeploy/go-octopusdeploy/v2 v2.78.1-0.20250804222835-82d998586c96
-	github.com/OctopusSolutionsEngineering/OctopusTerraformTestFramework v1.0.2-0.20250907221023-acb62200bede
+	github.com/OctopusDeploy/go-octopusdeploy/v2 v2.80.1
+	github.com/OctopusSolutionsEngineering/OctopusTerraformTestFramework v1.0.2-0.20250907230507-335dc8507012
 	github.com/aws/aws-sdk-go-v2 v1.32.3
 	github.com/aws/aws-sdk-go-v2/config v1.28.1
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.66.2

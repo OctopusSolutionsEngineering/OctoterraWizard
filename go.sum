@@ -98,6 +98,7 @@ github.com/OctopusDeploy/go-octopusdeploy/v2 v2.64.1-0.20250105233436-6686feb4a3
 github.com/OctopusDeploy/go-octopusdeploy/v2 v2.64.1-0.20250105233436-6686feb4a3e6/go.mod h1:ggvOXzMnq+w0pLg6C9zdjz6YBaHfO3B3tqmmB7JQdaw=
 github.com/OctopusDeploy/go-octopusdeploy/v2 v2.78.1-0.20250804222835-82d998586c96 h1:TSrrJL8jaKOKHplAyfwPnakEJ5hjkiW0rfjr0qY9bYo=
 github.com/OctopusDeploy/go-octopusdeploy/v2 v2.78.1-0.20250804222835-82d998586c96/go.mod h1:ZCOnCz9ae/uuOk7AIQ9NzjnzFbuN8Q7H3oj2Eq4QSgQ=
+github.com/OctopusDeploy/go-octopusdeploy/v2 v2.80.1/go.mod h1:ZCOnCz9ae/uuOk7AIQ9NzjnzFbuN8Q7H3oj2Eq4QSgQ=
 github.com/OctopusSolutionsEngineering/OctopusTerraformTestFramework v0.0.0-20241021204950-57a4bd076a2c h1:g23/BQJgEfGlmpWlWHxWrBCEyi8tzPQUVDY/40jIHQE=
 github.com/OctopusSolutionsEngineering/OctopusTerraformTestFramework v0.0.0-20241021204950-57a4bd076a2c/go.mod h1:gWbTP4KcM9cVx7MLOXv3lo7c8qHAWNBiRsEV57Ul4qY=
 github.com/OctopusSolutionsEngineering/OctopusTerraformTestFramework v1.0.2-0.20250804045951-911b2e97d07f h1:PYXjcI4YQFTWmgL7sJpnxUigpRkBbI8Kw0I05hoUIIw=
@@ -106,6 +107,8 @@ github.com/OctopusSolutionsEngineering/OctopusTerraformTestFramework v1.0.2-0.20
 github.com/OctopusSolutionsEngineering/OctopusTerraformTestFramework v1.0.2-0.20250829054039-8ce19e8cf397/go.mod h1:rVEelpfOTRw34ICQ5JhG1GH6PwPifdcrjHcrZ4ZsudQ=
 github.com/OctopusSolutionsEngineering/OctopusTerraformTestFramework v1.0.2-0.20250907221023-acb62200bede h1:QHwGp0x1ks2k63uuf5cNSDq0xBQOgBW1HNit7fXAQ9Q=
 github.com/OctopusSolutionsEngineering/OctopusTerraformTestFramework v1.0.2-0.20250907221023-acb62200bede/go.mod h1:rVEelpfOTRw34ICQ5JhG1GH6PwPifdcrjHcrZ4ZsudQ=
+github.com/OctopusSolutionsEngineering/OctopusTerraformTestFramework v1.0.2-0.20250907230507-335dc8507012 h1:Fj+nFW6R3xndxFLij32Xfq7ZQbZedXD3aw7XuLhUGi4=
+github.com/OctopusSolutionsEngineering/OctopusTerraformTestFramework v1.0.2-0.20250907230507-335dc8507012/go.mod h1:kllISYzQ8N3P6+3rScVhyW/KWnPWQbwzm8pFcMInSRM=
 github.com/antihax/optional v1.0.0/go.mod h1:uupD/76wgC+ih3iEmQUL+0Ugr19nfwCT1kdvxnR2qWY=
 github.com/armon/circbuf v0.0.0-20150827004946-bbbad097214e/go.mod h1:3U/XgcO3hCbHZ8TKRvWD2dDTCfh9M9ya+I9JpbB7O8o=
 github.com/armon/go-metrics v0.0.0-20180917152333-f0300d1749da/go.mod h1:Q73ZrmVTwzkszR9V5SSuryQ31EELlFMUz1kKyl939pY=
