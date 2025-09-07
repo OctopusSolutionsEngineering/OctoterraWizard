@@ -13,7 +13,7 @@ name: Go Build
 jobs:
   tests:
     name: Test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
@@ -21,20 +21,13 @@ jobs:
         index: [0, 1, 2]
 
     steps:
-#      - name: Install Latest Docker
-#        run: |
-#          curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-#          sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu  $(lsb_release -cs)  stable"
-#          sudo apt-get update
-#          sudo apt-get install docker-ce
-
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.22.5'
+          go-version: '1.25.1'
 
       - name: Download JUnit Summary from Previous Workflow
         id: download-artifact
@@ -52,7 +45,7 @@ jobs:
       - name: Install Fyne Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get -y install golang gcc libgl1-mesa-dev xorg-dev
+          sudo apt-get -y install gcc libgl1-mesa-dev xorg-dev
         shell: bash
 
       - name: Split integration tests
@@ -71,11 +64,6 @@ jobs:
       - name: Clone the Terraform provider source
         run: git clone https://github.com/OctopusDeployLabs/terraform-provider-octopusdeploy.git
         shell: bash
-
-#      - name: Check out the 0.22.0 release branch
-#        run: git checkout release/0.22.0
-#        shell: bash
-#        working-directory: terraform-provider-octopusdeploy
 
       - name: Build the Terraform provider from source
         run: go build -o terraform-provider-octopusdeploy
