@@ -42,10 +42,11 @@ jobs:
         run: go get ./...
         shell: bash
 
+      # See https://docs.fyne.io/started/
       - name: Install Fyne Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get -y install gcc libgl1-mesa-dev xorg-dev
+          sudo apt-get -y install gcc libgl1-mesa-dev xorg-dev libxkbcommon-dev
         shell: bash
 
       - name: Split integration tests
