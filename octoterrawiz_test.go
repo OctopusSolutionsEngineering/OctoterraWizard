@@ -205,6 +205,12 @@ func TestSpreadVariables(t *testing.T) {
 }
 
 func TestProjectSpreadVariables(t *testing.T) {
+	projectName, err := GenerateRandomString(10)
+
+	if err != nil {
+		t.Fatalf("Error generating random string: %v", err)
+	}
+
 	testFramework := test.OctopusContainerTest{}
 	testFramework.ArrangeTest(t, func(t *testing.T, container *test.OctopusContainer, client *client.Client) error {
 		// Act
@@ -213,7 +219,9 @@ func TestProjectSpreadVariables(t *testing.T) {
 			container,
 			filepath.Join("terraform"),
 			"3-simpleproject",
-			[]string{})
+			[]string{
+				"-var=project_name=" + projectName,
+			})
 
 		if err != nil {
 			return err
