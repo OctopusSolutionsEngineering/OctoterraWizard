@@ -263,7 +263,7 @@ func TestProjectSpreadVariables(t *testing.T) {
 				t.Fatalf("Error executing step: %v", err)
 			}
 
-			project, err := projects.GetByName(newSpaceClient, newSpaceClient.GetSpaceID(), "Test")
+			project, err := projects.GetByName(newSpaceClient, newSpaceClient.GetSpaceID(), projectName)
 
 			if err != nil {
 				t.Fatalf("Error getting library project: %v", err)
