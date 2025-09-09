@@ -105,20 +105,25 @@ func (s StartSpaceExportStep) GetContainer(parent fyne.Window) *fyne.Container {
 		result.SetText("🔵 Running the runbooks.")
 
 		go func() {
-			s.Execute(func(message string) {
-				fyne.Do(func() {
-					result.SetText(message)
-				})
-			},
-				func() {
-					next.Enable()
-					previous.Enable()
-					s.logs.Hide()
-					infinite.Hide()
-					s.exportSpace.Enable()
+			s.Execute(
+				func(message string) {
+					fyne.Do(func() {
+						result.SetText(message)
+					})
 				},
 				func() {
-					result.SetText("🟢 Runbooks ran successfully.")
+					fyne.Do(func() {
+						next.Enable()
+						previous.Enable()
+						s.logs.Hide()
+						infinite.Hide()
+						s.exportSpace.Enable()
+					})
+				},
+				func() {
+					fyne.Do(func() {
+						result.SetText("🟢 Runbooks ran successfully.")
+					})
 				},
 				func(err error) {
 					if err := logutil.WriteTextToFile("start_space_export_error.txt", err.Error()); err != nil {
