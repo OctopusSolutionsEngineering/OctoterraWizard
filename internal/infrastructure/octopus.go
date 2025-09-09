@@ -125,6 +125,11 @@ func RunRunbookRetry(state state.State, runbookName string, projectName string, 
 		return RunRunbookRetry(state, runbookName, projectName, environmentName, retryCount+1, err)
 	}
 
+	// The project may have been deleted
+	if project == nil {
+		return "", errors.New("The project " + projectName + " does not exist")
+	}
+
 	runbook, err := runbooks.GetByName(myclient, myclient.GetSpaceID(), project.GetID(), runbookName)
 
 	if err != nil {
@@ -280,6 +285,11 @@ func PublishRunbookRetry(state state.State, runbookName string, projectName stri
 
 	if err != nil {
 		return PublishRunbookRetry(state, runbookName, projectName, retryCount+1, err)
+	}
+
+	// The project may have been deleted
+	if project == nil {
+		return errors.New("The project " + projectName + " does not exist")
 	}
 
 	runbook, err := runbooks.GetByName(myclient, myclient.GetSpaceID(), project.GetID(), runbookName)
