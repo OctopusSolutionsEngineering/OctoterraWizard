@@ -186,7 +186,11 @@ func (s StartSpaceExportStep) Execute(statusCallback func(message string), doneC
 		return
 	} else {
 		if err := infrastructure.WaitForTask(s.State, taskId, func(message string) {
-			statusCallback("🔵 __ 2. Deploy Space is " + message + ". This runbook can take quite some time (many hours) for large spaces.")
+			if message == "Success" {
+				statusCallback("🔵 __ 2. Deploy Space is " + message)
+			} else {
+				statusCallback("🔵 __ 2. Deploy Space is " + message + ". This runbook can take quite some time (many hours) for large spaces.")
+			}
 		}); err != nil {
 			errCallback(errors.Join(errors.New("failed to get task status for task "+taskId), err))
 			return
