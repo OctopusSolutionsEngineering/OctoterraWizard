@@ -123,8 +123,10 @@ func (s StartProjectExportStep) GetContainer(parent fyne.Window) *fyne.Container
 					})
 				},
 				func() {
-					result.SetText("🟢 Runbooks ran successfully.")
-					s.logs.Hide()
+					fyne.Do(func() {
+						result.SetText("🟢 Runbooks ran successfully.")
+						s.logs.Hide()
+					})
 				},
 				func(err error) {
 					if err == nil {
