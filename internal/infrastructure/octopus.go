@@ -131,6 +131,10 @@ func RunRunbookRetry(state state.State, runbookName string, projectName string, 
 		return RunRunbookRetry(state, runbookName, projectName, environmentName, retryCount+1, err)
 	}
 
+	if runbook == nil {
+		return "", errors.New("The runbook " + runbookName + " does not exist in project " + projectName)
+	}
+
 	if runbook.PublishedRunbookSnapshotID == "" {
 		return "", octoerrors.RunbookNotPublishedError{
 			Runbook: runbook,
@@ -282,6 +286,11 @@ func PublishRunbookRetry(state state.State, runbookName string, projectName stri
 
 	if err != nil {
 		return PublishRunbookRetry(state, runbookName, projectName, retryCount+1, err)
+	}
+
+	// The project may have been deleted
+	if runbook == nil {
+		return errors.New("The runbook " + runbookName + " does not exist in project " + projectName)
 	}
 
 	url := state.GetExternalServer() + runbook.GetLinks()["RunbookSnapshotTemplate"]
