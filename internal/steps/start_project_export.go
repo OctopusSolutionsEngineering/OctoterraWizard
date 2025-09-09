@@ -120,11 +120,11 @@ func (s StartProjectExportStep) GetContainer(parent fyne.Window) *fyne.Container
 						previous.Enable()
 						next.Enable()
 						infinite.Hide()
-
-						result.SetText("🟢 Runbooks ran successfully.")
-						next.Enable()
-						s.logs.Hide()
 					})
+				},
+				func() {
+					result.SetText("🟢 Runbooks ran successfully.")
+					s.logs.Hide()
 				},
 				func(err error) {
 					if err == nil {
@@ -153,7 +153,7 @@ func (s StartProjectExportStep) GetContainer(parent fyne.Window) *fyne.Container
 	return content
 }
 
-func (s StartProjectExportStep) Execute(statusCallback func(message string), doneCallback func(), errCallback func(error), runbookEnvironment string) {
+func (s StartProjectExportStep) Execute(statusCallback func(message string), doneCallback func(), successCallback func(), errCallback func(error), runbookEnvironment string) {
 	defer doneCallback()
 
 	myclient, err := octoclient.CreateClient(s.State)
@@ -237,8 +237,12 @@ func (s StartProjectExportStep) Execute(statusCallback func(message string), don
 	runAndTaskError = errors.Join(runAndTaskError, s.serializeProjects(deployReleaseProjects, runbookEnvironment, statusCallback))
 	runAndTaskError = errors.Join(runAndTaskError, s.deployProjects(deployReleaseProjects, runbookEnvironment, statusCallback))
 
-	errCallback(runAndTaskError)
+	if runAndTaskError != nil {
+		errCallback(runAndTaskError)
+		return
+	}
 
+	successCallback()
 }
 
 func (s StartProjectExportStep) serializeProjects(filteredProjects []*projects.Project, runbookEnvironment string, statusCallback func(message string)) error {
