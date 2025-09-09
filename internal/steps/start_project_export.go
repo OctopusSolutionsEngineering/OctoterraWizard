@@ -104,10 +104,6 @@ func (s StartProjectExportStep) GetContainer(parent fyne.Window) *fyne.Container
 		infinite.Show()
 		link.Hide()
 		s.exportDone = true
-		defer s.exportProjects.Enable()
-		defer previous.Enable()
-		defer next.Enable()
-		defer infinite.Hide()
 
 		result.SetText("🔵 Running the runbooks.")
 
@@ -120,12 +116,21 @@ func (s StartProjectExportStep) GetContainer(parent fyne.Window) *fyne.Container
 				},
 				func() {
 					fyne.Do(func() {
+						s.exportProjects.Enable()
+						previous.Enable()
+						next.Enable()
+						infinite.Hide()
+
 						result.SetText("🟢 Runbooks ran successfully.")
 						next.Enable()
 						s.logs.Hide()
 					})
 				},
 				func(err error) {
+					if err == nil {
+						return
+					}
+
 					fyne.Do(func() {
 						if err := logutil.WriteTextToFile("start_project_export_error.txt", err.Error()); err != nil {
 							fmt.Println("Failed to write error to file")
