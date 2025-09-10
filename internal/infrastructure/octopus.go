@@ -355,7 +355,7 @@ func PublishRunbookRetry(state state.State, runbookName string, projectName stri
 		// Check for the possibility of no package versions being returned
 		if len(versions.Items) == 0 {
 			packageErrors = errors.Join(packageErrors, fmt.Errorf(
-				"No versions found for package '%s' in feed '%s' in runbook snapshot",
+				"No versions found for package '%s' in feed '%s' in runbook snapshot. Make sure the serialize project runbook has been run.",
 				snapshotPackage["PackageId"],
 				snapshotPackage["FeedId"],
 			))
