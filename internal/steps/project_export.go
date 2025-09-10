@@ -19,7 +19,6 @@ import (
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/projects"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/runbooks"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/variables"
-	"github.com/mcasperson/OctoterraWizard/internal/data"
 	"github.com/mcasperson/OctoterraWizard/internal/infrastructure"
 	"github.com/mcasperson/OctoterraWizard/internal/logutil"
 	"github.com/mcasperson/OctoterraWizard/internal/octoclient"
@@ -106,367 +105,290 @@ func (s ProjectExportStep) createNewProject(parent fyne.Window) {
 	s.createProject.Disable()
 	s.result.SetText("🔵 Creating runbooks. This can take a little while.")
 
-	defer s.next.Enable()
-	defer s.previous.Enable()
-	defer s.infinite.Hide()
-	defer s.createProject.Enable()
+	go func() {
+		s.Execute(
+			// prompt
+			func(title string, message string, callback func(bool)) {
+				dialog.NewConfirm(title, message, callback, parent).Show()
+			},
+			// status
+			func(message string) {
+				fyne.Do(func() {
+					s.result.SetText(message)
+				})
+			},
+			// done
+			func() {
+				fyne.Do(func() {
+					s.next.Enable()
+					s.previous.Enable()
+					s.infinite.Hide()
+					s.createProject.Enable()
+				})
+			},
+			// success
+			func() {
+				fyne.Do(func() {
+					s.result.SetText("🟢 Added runbooks to all projects")
+					s.logs.SetText("")
+					s.logs.Hide()
+				})
+			},
+			// error
+			func(message string, err error) {
+				if err := logutil.WriteTextToFile("project_export_error.txt", err.Error()); err != nil {
+					fmt.Println("Failed to write error to file")
+				}
 
-	s.Execute(func(title string, message string, callback func(bool)) {
-		dialog.NewConfirm(title, message, callback, parent).Show()
-	}, func(message string, err error) {
-		if err := logutil.WriteTextToFile("project_export_error.txt", err.Error()); err != nil {
-			fmt.Println("Failed to write error to file")
-		}
-
-		s.result.SetText(message)
-		s.logs.SetText(err.Error())
-		s.logs.Show()
-		s.previous.Enable()
-		s.next.Disable()
-		s.infinite.Hide()
-		s.createProject.Enable()
-	}, func(message string) {
-		s.result.SetText(message)
-		s.logs.SetText("")
-		s.logs.Hide()
-		s.next.Enable()
-		s.previous.Enable()
-		s.infinite.Hide()
-		s.createProject.Enable()
-	}, func(message string) {
-		s.result.SetText(message)
-	})
+				s.result.SetText(message)
+				s.logs.SetText(err.Error())
+				s.logs.Show()
+				s.previous.Enable()
+				s.next.Disable()
+				s.infinite.Hide()
+				s.createProject.Enable()
+			})
+	}()
 }
 
-func (s ProjectExportStep) Execute(prompt func(string, string, func(bool)), handleError func(string, error), handleSuccess func(string), status func(string)) {
-	doneCh := make(chan bool)
-	successChan := make(chan string)
-	errorChan := make(chan data.MessageError)
-	statusChan := make(chan string)
-	promptChan := make(chan data.PromptResponse)
+func (s ProjectExportStep) Execute(prompt func(string, string, func(bool)), statusCallback func(message string), doneCallback func(), successCallback func(), errCallback func(string, error)) {
 
-	go func() {
-		defer func() {
-			doneCh <- true
-		}()
+	defer doneCallback()
 
-		myclient, err := octoclient.CreateClient(s.State)
+	myclient, err := octoclient.CreateClient(s.State)
+
+	if err != nil {
+		errCallback("🔴 Failed to create the client", err)
+		return
+	}
+
+	allProjects, err := infrastructure.GetProjects(myclient)
+
+	if err != nil {
+		errCallback("🔴 Failed to get all the projects", err)
+		return
+	}
+
+	lvsExists, lvs, err := query.LibraryVariableSetExists(myclient, "Octoterra")
+
+	if err != nil {
+		errCallback("🔴 Failed to get the library variable set Octoterra", err)
+		return
+	}
+
+	if !lvsExists {
+		errCallback("🔴 The library variable set Octoterra could not be found. Make sure you have run the \"Space Serialization Runbooks\" step.", err)
+		return
+	}
+
+	varsLvsExists, varsLvs, err := query.LibraryVariableSetExists(myclient, sensitivevariables.SecretsLibraryVariableSetName)
+
+	if err != nil {
+		errCallback("🔴 Failed to get the library variable set "+sensitivevariables.SecretsLibraryVariableSetName, err)
+		return
+	}
+
+	// First look deletes any existing projects
+	for _, project := range allProjects {
+		if project.Name == spaceManagementProject {
+			continue
+		}
+
+		runbookExists, runbook, err := s.runbookExists(myclient, project.ID, "__ 1. Serialize Project")
 
 		if err != nil {
-			handleError("🔴 Failed to create the client", err)
+			errCallback("🔴 Failed to find runbook", err)
 			return
 		}
 
-		allProjects, err := infrastructure.GetProjects(myclient)
-
-		if err != nil {
-			errorChan <- data.MessageError{
-				Message: "🔴 Failed to get all the projects",
-				Error:   err,
-			}
-			return
-		}
-
-		lvsExists, lvs, err := query.LibraryVariableSetExists(myclient, "Octoterra")
-
-		if err != nil {
-			errorChan <- data.MessageError{
-				Message: "🔴 Failed to get the library variable set Octoterra",
-				Error:   err,
-			}
-			return
-		}
-
-		if !lvsExists {
-			errorChan <- data.MessageError{
-				Message: "🔴 The library variable set Octoterra could not be found. Make sure you have run the \"Space Serialization Runbooks\" step.",
-				Error:   errors.New("resource not found"),
-			}
-			return
-		}
-
-		varsLvsExists, varsLvs, err := query.LibraryVariableSetExists(myclient, sensitivevariables.SecretsLibraryVariableSetName)
-
-		if err != nil {
-			errorChan <- data.MessageError{
-				Message: "🔴 Failed to get the library variable set " + sensitivevariables.SecretsLibraryVariableSetName,
-				Error:   err,
-			}
-			return
-		}
-
-		// First look deletes any existing projects
-		for _, project := range allProjects {
-			if project.Name == spaceManagementProject {
-				continue
-			}
-
-			runbookExists, runbook, err := s.runbookExists(myclient, project.ID, "__ 1. Serialize Project")
-
-			if err != nil {
-				handleError("🔴 Failed to find runbook", err)
-				return
-			}
-
-			if runbookExists {
-				deleteRunbook1Func := func(b bool) {
-					if b {
-						if err := s.deleteRunbook(myclient, runbook); err != nil {
-							errorChan <- data.MessageError{
-								Message: "🔴 Failed to delete the resource",
-								Error:   err,
-							}
-						} else if s.State.PromptForDelete {
-							s.Execute(prompt, handleError, handleSuccess, status)
-						}
-					}
-				}
-
-				if s.State.PromptForDelete {
-					promptChan <- data.PromptResponse{
-						Title:    "Project Group Exists",
-						Message:  "The runbook \"" + runbook.Name + "\" already exists in project " + project.Name + ". Do you want to delete it? It is usually safe to delete this resource.",
-						Callback: deleteRunbook1Func,
-					}
-					return
-				} else {
-					deleteRunbook1Func(true)
-				}
-			}
-
-			runbook2Exists, runbook2, err := s.runbookExists(myclient, project.ID, "__ 2. Deploy Project")
-
-			if err != nil {
-				errorChan <- data.MessageError{
-					Message: "🔴 Failed to find runbook",
-					Error:   err,
-				}
-				return
-			}
-
-			if runbook2Exists {
-				deleteRunbook2Func := func(b bool) {
-					if b {
-						if err := s.deleteRunbook(myclient, runbook2); err != nil {
-							errorChan <- data.MessageError{
-								Message: "🔴 Failed to delete the resource",
-								Error:   err,
-							}
-						} else if s.State.PromptForDelete {
-							s.Execute(prompt, handleError, handleSuccess, status)
-						}
-					}
-				}
-
-				if s.State.PromptForDelete {
-					promptChan <- data.PromptResponse{
-						Title:    "Runbook Exists",
-						Message:  "The runbook \"" + runbook2.Name + "\" already exists in project " + project.Name + ". Do you want to delete it? It is usually safe to delete this resource.",
-						Callback: deleteRunbook2Func,
-					}
-					return
-				} else {
-					deleteRunbook2Func(true)
-				}
-			}
-
-			variableExists, matchingVariables, err := s.projectVariableExists(myclient, project.ID, "OctoterraWiz.Destination.ProjectName")
-
-			if variableExists {
-				for _, variable := range matchingVariables {
-					deleteVariableFunc := func(b bool) {
-						if b {
-							if err := s.deleteProjectVariable(myclient, project.ID, variable); err != nil {
-								errorChan <- data.MessageError{
-									Message: "🔴 Failed to delete the resource",
-									Error:   err,
-								}
-							} else if s.State.PromptForDelete {
-								s.Execute(prompt, handleError, handleSuccess, status)
-							}
-						}
-					}
-
-					if s.State.PromptForDelete {
-						promptChan <- data.PromptResponse{
-							Title:    "Variable Exists",
-							Message:  "The variable \"" + variable.Name + "\" already exists in project " + project.Name + ". Do you want to delete it? It is usually safe to delete this resource.",
-							Callback: deleteVariableFunc,
-						}
-						return
-					} else {
-						deleteVariableFunc(true)
+		if runbookExists {
+			deleteRunbook1Func := func(b bool) {
+				if b {
+					if err := s.deleteRunbook(myclient, runbook); err != nil {
+						errCallback("🔴 Failed to delete the resource", err)
+					} else if s.State.PromptForDelete {
+						s.Execute(prompt, statusCallback, doneCallback, successCallback, errCallback)
 					}
 				}
 			}
-		}
 
-		// Find the step template ID
-		serializeProjectTemplate, err, message := query.GetStepTemplateId(myclient, s.State, "Octopus - Serialize Project to Terraform")
-
-		if err != nil {
-			errorChan <- data.MessageError{
-				Message: message,
-				Error:   err,
-			}
-			return
-		}
-
-		deploySpaceTemplateS3, err, message := query.GetStepTemplateId(myclient, s.State, "Octopus - Populate Octoterra Space (S3 Backend)")
-
-		if err != nil {
-			errorChan <- data.MessageError{
-				Message: message,
-				Error:   err,
-			}
-			return
-		}
-
-		deploySpaceTemplateAzureStorage, err, message := query.GetStepTemplateId(myclient, s.State, "Octopus - Populate Octoterra Space (Azure Backend)")
-
-		if err != nil {
-			errorChan <- data.MessageError{
-				Message: message,
-				Error:   err,
-			}
-		}
-
-		for index, project := range allProjects {
-			// Save and apply the module
-			dir, err := ioutil.TempDir("", "octoterra")
-			if err != nil {
-				errorChan <- data.MessageError{
-					Message: "🔴 An error occurred while creating a temporary directory",
-					Error:   err,
-				}
-				return
-			}
-
-			filePath := filepath.Join(dir, "terraform.tf")
-			defer func(path string) {
-				err := os.RemoveAll(path)
-				if err != nil {
-					// ignore this and move on
-					fmt.Println(err.Error())
-				}
-			}(filePath)
-
-			if err := os.WriteFile(filePath, []byte(runbookModule), 0644); err != nil {
-				errorChan <- data.MessageError{
-					Message: "🔴 An error occurred while writing the Terraform file",
-					Error:   err,
-				}
-				return
-			}
-
-			initCmd := exec.Command("terraform", "init", "-no-color")
-			initCmd.Dir = dir
-
-			var initStdout, initStderr bytes.Buffer
-			initCmd.Stdout = &initStdout
-			initCmd.Stderr = &initStderr
-
-			if err := initCmd.Run(); err != nil {
-				errorChan <- data.MessageError{
-					Message: "🔴 Terraform init failed.",
-					Error:   errors.New(initStdout.String() + initCmd.String()),
-				}
-				return
-			}
-
-			applyCmd := exec.Command("terraform",
-				"apply",
-				"-auto-approve",
-				"-no-color",
-				"-var=octopus_serialize_actiontemplateid="+serializeProjectTemplate,
-				"-var=octopus_deploys3_actiontemplateid="+deploySpaceTemplateS3,
-				"-var=octopus_deployazure_actiontemplateid="+deploySpaceTemplateAzureStorage,
-				"-var=octopus_server_external="+s.State.GetExternalServer(),
-				"-var=terraform_backend="+s.State.BackendType,
-				"-var=use_container_images="+fmt.Sprint(s.State.UseContainerImages),
-				"-var=default_secret_variables=false",
-				"-var=customise_destination_project_name="+fmt.Sprint(s.State.EnableProjectRenaming),
-				"-var=octopus_server="+s.State.Server,
-				"-var=octopus_apikey="+s.State.ApiKey,
-				"-var=octopus_space_id="+s.State.Space,
-				"-var=octopus_project_id="+project.ID,
-				"-var=terraform_state_bucket="+s.State.AwsS3Bucket,
-				"-var=terraform_state_bucket_region="+s.State.AwsS3BucketRegion,
-				"-var=terraform_state_azure_resource_group="+s.State.AzureResourceGroupName,
-				"-var=terraform_state_azure_storage_account="+s.State.AzureStorageAccountName,
-				"-var=terraform_state_azure_storage_container="+s.State.AzureContainerName,
-				"-var=octopus_destination_server="+s.State.DestinationServer,
-				"-var=octopus_destination_apikey="+s.State.DestinationApiKey,
-				"-var=octopus_destination_space_id="+s.State.DestinationSpace,
-				"-var=octopus_project_name="+project.Name)
-			applyCmd.Dir = dir
-
-			var stdout, stderr bytes.Buffer
-			applyCmd.Stdout = &stdout
-			applyCmd.Stderr = &stderr
-
-			if err := applyCmd.Run(); err != nil {
-				errorChan <- data.MessageError{
-					Message: "🔴 Terraform apply failed",
-					Error:   errors.New(stdout.String() + stderr.String()),
-				}
+			if s.State.PromptForDelete {
+				prompt("Project Group Exists", "The runbook \""+runbook.Name+"\" already exists in project "+project.Name+". Do you want to delete it? It is usually safe to delete this resource.", deleteRunbook1Func)
 				return
 			} else {
-				statusChan <- "🔵 Terraform apply succeeded (" + fmt.Sprint(index) + " / " + fmt.Sprint(len(allProjects)) + ")"
-				fmt.Println(stdout.String() + stderr.String())
+				deleteRunbook1Func(true)
 			}
-
-			// link the library variable set
-			projectResource, err := myclient.Projects.GetByID(project.ID)
-
-			if err != nil {
-				errorChan <- data.MessageError{
-					Message: "🔴 Failed to get the project",
-					Error:   errors.New(err.Error() + " " + project.ID + " " + project.Name),
-				}
-				return
-			}
-
-			projectResource.IncludedLibraryVariableSets = append(projectResource.IncludedLibraryVariableSets, lvs.ID)
-
-			// The secrets library variable set is optional
-			if varsLvsExists {
-				projectResource.IncludedLibraryVariableSets = append(projectResource.IncludedLibraryVariableSets, varsLvs.ID)
-			}
-
-			_, err = projects.Update(myclient, projectResource)
-
-			if err != nil {
-				errorChan <- data.MessageError{
-					Message: "🔴 Failed to update the project",
-					Error:   errors.New(err.Error() + " " + projectResource.ID + " " + projectResource.Name),
-				}
-				return
-			}
-
 		}
 
-		successChan <- "🟢 Added runbooks to all projects"
-	}()
+		runbook2Exists, runbook2, err := s.runbookExists(myclient, project.ID, "__ 2. Deploy Project")
 
-	for {
-		select {
-		case <-doneCh:
+		if err != nil {
+			errCallback("🔴 Failed to find runbook", err)
 			return
+		}
 
-		case success := <-successChan:
-			handleSuccess(success)
+		if runbook2Exists {
+			deleteRunbook2Func := func(b bool) {
+				if b {
+					if err := s.deleteRunbook(myclient, runbook2); err != nil {
+						errCallback("🔴 Failed to delete the resource", err)
+					} else if s.State.PromptForDelete {
+						s.Execute(prompt, statusCallback, doneCallback, successCallback, errCallback)
+					}
+				}
+			}
 
-		case failure := <-errorChan:
-			handleError(failure.Message, failure.Error)
+			if s.State.PromptForDelete {
+				prompt("Runbook Exists", "The runbook \""+runbook2.Name+"\" already exists in project "+project.Name+". Do you want to delete it? It is usually safe to delete this resource.", deleteRunbook2Func)
+				return
+			} else {
+				deleteRunbook2Func(true)
+			}
+		}
 
-		case statusMessage := <-statusChan:
-			status(statusMessage)
+		variableExists, matchingVariables, err := s.projectVariableExists(myclient, project.ID, "OctoterraWiz.Destination.ProjectName")
 
-		case promptMessage := <-promptChan:
-			prompt(promptMessage.Title, promptMessage.Message, promptMessage.Callback)
+		if variableExists {
+			for _, variable := range matchingVariables {
+				deleteVariableFunc := func(b bool) {
+					if b {
+						if err := s.deleteProjectVariable(myclient, project.ID, variable); err != nil {
+							errCallback("🔴 Failed to delete the resource", err)
+						} else if s.State.PromptForDelete {
+							s.Execute(prompt, statusCallback, doneCallback, successCallback, errCallback)
+						}
+					}
+				}
+
+				if s.State.PromptForDelete {
+					prompt("Variable Exists", "The variable \""+variable.Name+"\" already exists in project "+project.Name+". Do you want to delete it? It is usually safe to delete this resource.", deleteVariableFunc)
+					return
+				} else {
+					deleteVariableFunc(true)
+				}
+			}
 		}
 	}
+
+	// Find the step template ID
+	serializeProjectTemplate, err, message := query.GetStepTemplateId(myclient, s.State, "Octopus - Serialize Project to Terraform")
+
+	if err != nil {
+		errCallback(message, err)
+		return
+	}
+
+	deploySpaceTemplateS3, err, message := query.GetStepTemplateId(myclient, s.State, "Octopus - Populate Octoterra Space (S3 Backend)")
+
+	if err != nil {
+		errCallback(message, err)
+		return
+	}
+
+	deploySpaceTemplateAzureStorage, err, message := query.GetStepTemplateId(myclient, s.State, "Octopus - Populate Octoterra Space (Azure Backend)")
+
+	if err != nil {
+		errCallback(message, err)
+	}
+
+	for index, project := range allProjects {
+		// Save and apply the module
+		dir, err := ioutil.TempDir("", "octoterra")
+		if err != nil {
+			errCallback("🔴 An error occurred while creating a temporary directory", err)
+			return
+		}
+
+		filePath := filepath.Join(dir, "terraform.tf")
+		defer func(path string) {
+			err := os.RemoveAll(path)
+			if err != nil {
+				// ignore this and move on
+				fmt.Println(err.Error())
+			}
+		}(filePath)
+
+		if err := os.WriteFile(filePath, []byte(runbookModule), 0644); err != nil {
+			errCallback("🔴 An error occurred while writing the Terraform file", err)
+			return
+		}
+
+		initCmd := exec.Command("terraform", "init", "-no-color")
+		initCmd.Dir = dir
+
+		var initStdout, initStderr bytes.Buffer
+		initCmd.Stdout = &initStdout
+		initCmd.Stderr = &initStderr
+
+		if err := initCmd.Run(); err != nil {
+			errCallback("🔴 Terraform init failed.", err)
+			return
+		}
+
+		applyCmd := exec.Command("terraform",
+			"apply",
+			"-auto-approve",
+			"-no-color",
+			"-var=octopus_serialize_actiontemplateid="+serializeProjectTemplate,
+			"-var=octopus_deploys3_actiontemplateid="+deploySpaceTemplateS3,
+			"-var=octopus_deployazure_actiontemplateid="+deploySpaceTemplateAzureStorage,
+			"-var=octopus_server_external="+s.State.GetExternalServer(),
+			"-var=terraform_backend="+s.State.BackendType,
+			"-var=use_container_images="+fmt.Sprint(s.State.UseContainerImages),
+			"-var=default_secret_variables=false",
+			"-var=customise_destination_project_name="+fmt.Sprint(s.State.EnableProjectRenaming),
+			"-var=octopus_server="+s.State.Server,
+			"-var=octopus_apikey="+s.State.ApiKey,
+			"-var=octopus_space_id="+s.State.Space,
+			"-var=octopus_project_id="+project.ID,
+			"-var=terraform_state_bucket="+s.State.AwsS3Bucket,
+			"-var=terraform_state_bucket_region="+s.State.AwsS3BucketRegion,
+			"-var=terraform_state_azure_resource_group="+s.State.AzureResourceGroupName,
+			"-var=terraform_state_azure_storage_account="+s.State.AzureStorageAccountName,
+			"-var=terraform_state_azure_storage_container="+s.State.AzureContainerName,
+			"-var=octopus_destination_server="+s.State.DestinationServer,
+			"-var=octopus_destination_apikey="+s.State.DestinationApiKey,
+			"-var=octopus_destination_space_id="+s.State.DestinationSpace,
+			"-var=octopus_project_name="+project.Name)
+		applyCmd.Dir = dir
+
+		var stdout, stderr bytes.Buffer
+		applyCmd.Stdout = &stdout
+		applyCmd.Stderr = &stderr
+
+		if err := applyCmd.Run(); err != nil {
+			errCallback("🔴 Terraform apply failed", err)
+			return
+		} else {
+			statusCallback("🔵 Terraform apply succeeded (" + fmt.Sprint(index) + " / " + fmt.Sprint(len(allProjects)) + ")")
+			fmt.Println(stdout.String() + stderr.String())
+		}
+
+		// link the library variable set
+		projectResource, err := myclient.Projects.GetByID(project.ID)
+
+		if err != nil {
+			errCallback("🔴 Failed to get the project", err)
+			return
+		}
+
+		projectResource.IncludedLibraryVariableSets = append(projectResource.IncludedLibraryVariableSets, lvs.ID)
+
+		// The secrets library variable set is optional
+		if varsLvsExists {
+			projectResource.IncludedLibraryVariableSets = append(projectResource.IncludedLibraryVariableSets, varsLvs.ID)
+		}
+
+		_, err = projects.Update(myclient, projectResource)
+
+		if err != nil {
+			errCallback("🔴 Failed to update the project", errors.New(err.Error()+" "+projectResource.ID+" "+projectResource.Name))
+			return
+		}
+
+	}
+
+	successCallback()
 }
 
 func (s ProjectExportStep) deleteRunbook(myclient *client.Client, runbook *runbooks.Runbook) error {
