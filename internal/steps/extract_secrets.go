@@ -2,6 +2,9 @@ package steps
 
 import (
 	"fmt"
+	"net/url"
+	"strings"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
@@ -13,8 +16,6 @@ import (
 	"github.com/mcasperson/OctoterraWizard/internal/strutil"
 	"github.com/mcasperson/OctoterraWizard/internal/validators"
 	"github.com/mcasperson/OctoterraWizard/internal/wizard"
-	"net/url"
-	"strings"
 )
 
 // ExtractSecrets provides a step in the wizard to extract secrets from the Octopus database
@@ -143,25 +144,33 @@ func (s ExtractSecrets) GetContainer(parent fyne.Window) *fyne.Container {
 		s.extractDone = true
 
 		go func() {
-			defer previous.Enable()
-			defer next.Enable()
-			defer s.dbServer.Enable()
-			defer s.password.Enable()
-			defer s.username.Enable()
-			defer s.database.Enable()
-			defer s.port.Enable()
-			defer s.masterKey.Enable()
-			defer s.extractVariables.Enable()
-			defer infinite.Hide()
-			if err := s.Execute(); err != nil {
-				if err := logutil.WriteTextToFile("extract_secrets_error.txt", err.Error()); err != nil {
-					fmt.Println("Failed to write error to file")
-				}
+			s.Execute(
+				func() {
+					previous.Enable()
+					next.Enable()
+					s.dbServer.Enable()
+					s.password.Enable()
+					s.username.Enable()
+					s.database.Enable()
+					s.port.Enable()
+					s.masterKey.Enable()
+					s.extractVariables.Enable()
+					infinite.Hide()
+				},
+				func() {
+					fyne.Do(func() {
+						s.result.SetText("🟢 Sensitive values have been extracted.")
+					})
+				},
+				func(err error) {
+					if err := logutil.WriteTextToFile("extract_secrets_error.txt", err.Error()); err != nil {
+						fmt.Println("Failed to write error to file")
+					}
 
-				s.result.SetText("🔴 An error was raised while attempting to extract the sensitive values." + err.Error())
-			} else {
-				s.result.SetText("🟢 Sensitive values have been extracted.")
-			}
+					fyne.Do(func() {
+						s.result.SetText("🔴 An error was raised while attempting to extract the sensitive values." + err.Error())
+					})
+				})
 		}()
 	})
 
@@ -225,10 +234,13 @@ func (s *ExtractSecrets) SaveSecretsVariable() error {
 	return nil
 }
 
-func (s ExtractSecrets) Execute() error {
+func (s ExtractSecrets) Execute(doneCallback func(), successCallback func(), errCallback func(error)) {
+	defer doneCallback()
+
 	if err := validators.ValidateDatabase(s.getState()); err != nil {
 		if err := logutil.WriteTextToFile("extract_secrets_error.txt", err.Error()); err != nil {
-			return err
+			errCallback(err)
+			return
 		}
 	}
 
@@ -239,15 +251,18 @@ func (s ExtractSecrets) Execute() error {
 		if err := logutil.WriteTextToFile("extract_secrets_error.txt", err.Error()); err != nil {
 			fmt.Println("Failed to write error to file")
 		}
-		return err
+		errCallback(err)
+		return
 	} else {
 		if err := sensitivevariables.CreateSecretsLibraryVariableSet(variableValue, newState); err != nil {
 			if err := logutil.WriteTextToFile("extract_secrets_error.txt", err.Error()); err != nil {
 				fmt.Println("Failed to write error to file")
 			}
 
-			return err
+			errCallback(err)
+			return
 		}
 	}
-	return nil
+
+	successCallback()
 }
