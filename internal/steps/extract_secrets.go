@@ -146,16 +146,18 @@ func (s ExtractSecrets) GetContainer(parent fyne.Window) *fyne.Container {
 		go func() {
 			s.Execute(
 				func() {
-					previous.Enable()
-					next.Enable()
-					s.dbServer.Enable()
-					s.password.Enable()
-					s.username.Enable()
-					s.database.Enable()
-					s.port.Enable()
-					s.masterKey.Enable()
-					s.extractVariables.Enable()
-					infinite.Hide()
+					fyne.Do(func() {
+						previous.Enable()
+						next.Enable()
+						s.dbServer.Enable()
+						s.password.Enable()
+						s.username.Enable()
+						s.database.Enable()
+						s.port.Enable()
+						s.masterKey.Enable()
+						s.extractVariables.Enable()
+						infinite.Hide()
+					})
 				},
 				func() {
 					fyne.Do(func() {
